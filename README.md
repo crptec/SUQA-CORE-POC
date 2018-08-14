@@ -29,10 +29,26 @@ Bitcoin was the father of the crypto revolution and it became a tradition. SUQA 
 
 • No Ico
 
-  
-1 month time locked term deposit interest %5 apr
+Tech data
 
-10% founders fee
+Targetspacing (block time): 120 sec.
+
+Message start string: mainnet f8 dd d4 b8, testnet b8 fd f4 d8
+
+P2p ports: mainnet 20970, testnet 20980
+
+RPC ports: mainnet 20971, testnet 20981
+
+Genesis string: "The Guardian 27/Jun/2018 One football pitch of forest lost every second in 2017, data reveals"
+
+Prefixes: pubkey 63 (”S”), privkey 63+128
+
+Max block size: 16MB (max 16.000 transactions per minute)
+
+Dev fee pubkey: SZLafuDjnjqh2tAfTrG9ZAGzbP8HkzNXvB
+
+Dev founders fee: 10% of block reward (including fees)
+
 
 25% of founders fee for Development
 
@@ -42,7 +58,7 @@ Bitcoin was the father of the crypto revolution and it became a tradition. SUQA 
 
 25% of founders fee for SUQA Foundation Rewards(Details will be given in the future)
 
-Block time 2 minutes..
+
 
 Block rewards 
 
@@ -73,6 +89,23 @@ Quantum Resistance.
 Most advanced Privacy and Security features.
 
 75 times faster than bitcoin with almost ZERO fees.
+
+
+Interests
+
+Term deposit interest apr %5; 
+
+first 3 months term deposit apr will be 25% (5% + 20%),
+
+max term deposit 1 month (from 1 year),
+
+min 1 day (from 2 days);
+
+bonus will be given if the term deposit end is inside the first 3 months of the blockchain.
+
+
+no interests for non-locked amounts (from yes)
+
 
 
 Benefits 
