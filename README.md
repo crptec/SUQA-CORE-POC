@@ -92,8 +92,13 @@ With asics already here for ethereum, cryptonight,lyra2v2,neoscrypt and a lot of
 
 • New x22i  Quantum Resistant Algo
 
+22 intelligent asic,fpga and quantum resistant memory intensive algos 
+POW chain X22i
 
-(22 intelligent asic,fpga and quantum resistant memory intensive algos)
+blake, bmw, groestl, skein, jh, keccak, luffa, cubehash, shavite, simd, echo - X11 - hamsi, fugue - X13 - shabal, whirlpool - X15 - sha512, swifftx (added inside X17, its input spans over the 4 previous hash outputs), haval256 - X17- tiger192, lyra2-256, streebog, sha256
+
+When the algo digest is shorter than 512 bits, it is padded with zeros (like haval256 on x17 and other such chains).
+)
 
 • The most asic and fpga resistant, memory intensive, power efficient,post quantum algo to date.
 
