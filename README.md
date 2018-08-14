@@ -1,4 +1,4 @@
-SUQA 
+ SUQA
 
 
 A decentralized blockchain based  giveaway platform that rewards freelancers,startups,charities and donators.
