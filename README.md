@@ -19,18 +19,18 @@ Bitcoin was the father of the crypto revolution and it became a tradition. SUQA 
 
 • Interest is handled and guaranteed in the blockchain. No trust required no human touch needed.
 
-• GPU mining only -no cpus-with the intention of spreading the hash but  without botnets,asics and fpgas..
+• GPU and Cpu mining only with the intention of spreading the hash but without asics and fpgas..
 
 • Fair Launch
 
 • No Premine
 
-• No Presale
+• No Presale of coins
 
 • No Ico
 
   
-1 month term deposit interest %5 apr
+1 month time locked term deposit interest %5 apr
 
 10% founders fee
 
@@ -40,7 +40,7 @@ Bitcoin was the father of the crypto revolution and it became a tradition. SUQA 
 
 25% of founders fee for exchanges listing, investors, unforeseen expenses etc
 
-25% of founders fee for SUQA Foundation Rewards
+25% of founders fee for SUQA Foundation Rewards(Details will be given in the future)
 
 Block time 2 minutes..
 
@@ -74,17 +74,14 @@ Most advanced Privacy and Security features.
 
 75 times faster than bitcoin with almost ZERO fees.
 
-Most advanced Privacy and Security features.
-40 times faster than bitcoin with almost ZERO fees.
-
 
 Benefits 
 
-	• Interest encourages users to time lock their balances.
+	• Time locked interest encourages users to lock up their balances.
  
-	• Interest favors long,short and mid term investors.
+	• Time locked interest favors long ,short and mid term investors.
  
-	• Encourages exchanges to list the coin, as they can earn interest on customer's deposits
+	• Time locked interest encourages exchanges to list the coin, as they can earn interest on customer's deposits
  
 	
 First blockchain based cryptocurrency that makes people earn by donating to startups, freelancers, humanity charities and meeting with new people.
