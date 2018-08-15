@@ -5,15 +5,15 @@ A decentralized blockchain based  giveaway platform that rewards freelancers,sta
 
 
 We are in the industry 4.0 revolution and digital cryptocurrencies are the future of transactions between people and machines. 
-SUQA is a name of an ancient currency from Nepal that has been used thousands of years ago. It also means *to wait* in Somali language. We are introducing you a new p2p digital currency that gets you 5 %  apr  interest from 1 month time locked deposit  just from waiting even if you are offline.
+SUQA is a name of an ancient currency from Nepal that has been used thousands of years ago. It also means *to wait* in Somali language. We are introducing you a new p2p digital currency that gets you 5 %  apr  interest from 1 month time locked deposit just from waiting your funds in your wallet even if you are offline.
 
 Bitcoin was the father of the crypto revolution and it became a tradition. SUQA will continue this tradition by enabling gpu only platform to the mining community. SUQA is the new jewel of the crypto crown with elegant implementation by our cryptography team with all benefits to miners and investors.
  
  • FEATURES
  
-• Fully Transparent - open-source code on Github, Public SUQA blockchain with blockchain explorer
+• Fully Transparent and open-source code on Github, Public SUQA blockchain with blockchain explorers.
 
-• SUQA has its own blockchain, it is not a token it is a hybrid utility coin.
+• SUQA has its own private blockchain, it is not a token it is a hybrid utility coin.
 
 • 5% apr interest for one month term deposit balance.
 
@@ -56,7 +56,7 @@ Dev founders fee: 10% of block reward (including fees)
 
 25% of founders fee for exchanges listing, investors, unforeseen expenses etc
 
-25% of founders fee for SUQA Foundation Rewards(Details will be given in the future)
+25% of founders fee for SUQA Foundation Rewards(Details will be given in the future.Transparent transactions)
 
 
 
@@ -88,7 +88,7 @@ Quantum Resistance.
 
 Most advanced Privacy and Security features.
 
-75 times faster transaction speed than bitcoin with almost ZERO fees.
+75 times faster transaction speed than bitcoin with almost ZERO fees.(533 tx/s)
 
 
 Interests
