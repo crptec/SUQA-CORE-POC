@@ -88,7 +88,7 @@ Quantum Resistance.
 
 Most advanced Privacy and Security features.
 
-75 times faster than bitcoin with almost ZERO fees.
+75 times faster transaction speed than bitcoin with almost ZERO fees.
 
 
 Interests
