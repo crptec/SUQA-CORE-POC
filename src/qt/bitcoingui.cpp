@@ -320,10 +320,10 @@ void BitcoinGUI::createActions()
 #ifdef ENABLE_WALLET
     if(enableWallet)
     {
-        miningOffAction = new QAction(QIcon(":/icons/transaction_conflicted"), tr("Solo Mining Off"), this);
+        miningOffAction = new QAction(QIcon(":/icons/transaction_conflicted"), tr("CPU Mining Off"), this);
         miningOffAction->setStatusTip(tr("Stop Mining. May take some time to wind down."));
-        miningOnAction = new QAction(QIcon(":/icons/tx_mined"), tr("Solo Mining On"), this);
-        miningOnAction->setStatusTip(tr("Mine solo."));
+        miningOnAction = new QAction(QIcon(":/icons/tx_mined"), tr("CPU Mining On"), this);
+        miningOnAction->setStatusTip(tr("CPU Mine."));
     }
 
     // These showNormalIfMinimized are needed because Send Coins and Receive Coins

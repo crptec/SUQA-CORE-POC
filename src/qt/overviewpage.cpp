@@ -214,7 +214,7 @@ void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmed
             ui->hodlTable->setItem(i, 0, new QTableWidgetItem(QString("Matured (Warning: this amount is no longer earning interest of any kind)")));
             totalMatured += matureValue;
         }else{
-            ui->hodlTable->setItem(i, 0, new QTableWidgetItem(QString("HOdled")));
+            ui->hodlTable->setItem(i, 0, new QTableWidgetItem(QString("TimeLocked")));
             totalAccrued += (withInterest-termDeposit.nValue);
 	    totalLocked  += termDeposit.nValue;
         }

@@ -259,7 +259,7 @@
             <item row="3" column="0">
              <widget class="QLabel" name="labelImmatureText">
               <property name="text">
-               <string>HOdl'd:</string>
+               <string>Immature:</string>
               </property>
              </widget>
             </item>
@@ -536,7 +536,7 @@
    <item>
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;HOdlings&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Interests&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
    </item>
@@ -683,7 +683,7 @@
            <cursorShape>IBeamCursor</cursorShape>
           </property>
           <property name="toolTip">
-           <string>Your total balance of matured hodlings that are currently not earning any interest.</string>
+           <string>Your total balance of matured deposits that are currently not earning any interest.</string>
           </property>
           <property name="text">
            <string notr="true">0.000 000 00 SUQA</string>
