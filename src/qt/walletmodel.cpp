@@ -263,11 +263,14 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
                 if(termDepositLength > 720*30){
                     ss <<"!!!!!WARNING: There is no interest rate advantage of using a Term Deposit for a period of more than 1 month. It is recommended that you cancel this transaction. ";
                 }
-                ss <<"Term Deposit Instruction Detected: ";
+                ss <<"Term Deposit Instruction Detected: " << std::fixed;
+                ss.precision(8);
                 ss <<"This will send the amount of " << (0.0+rcp.amount)/COIN <<" SUQA ";
                 ss <<"to be locked for " << termDepositLength << " blocks. ";
+                ss.precision(2);
                 ss <<"This is approximately " << (0.0+termDepositLength)/(720) << " days. ";
                 CAmount withInterest=GetInterest(rcp.amount, chainActive.Height()+1, chainActive.Height()+1+termDepositLength, chainActive.Height()+1+termDepositLength);
+                ss.precision(8);
                 ss <<"Upon maturation, it will be worth " << (0.0+withInterest)/COIN << " SUQA. ";
                 CAmount interestOnly=withInterest-rcp.amount;
                 double interestRateForTime=(0.0+interestOnly)/(rcp.amount);
