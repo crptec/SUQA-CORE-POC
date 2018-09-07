@@ -47,8 +47,16 @@
         <file alias="about_qt">res/icons/about_qt.png</file>
         <file alias="verify">res/icons/verify.png</file>
         <file alias="warning">res/icons/warning.png</file>
+		<file alias="splash">res/icons/splash.png</file>
+		<file alias="about_big">res/icons/about_big.png</file>
     </qresource>
-    <qresource prefix="/movies">
+	<qresource prefix="/images">
+        <file alias="background">res/images/background.png</file>
+		    </qresource>
+	<qresource prefix="/css">
+        <file alias="suqa1">res/css/suqa.css</file>
+    </qresource>
+	    <qresource prefix="/movies">
         <file alias="spinner-000">res/movies/spinner-000.png</file>
         <file alias="spinner-001">res/movies/spinner-001.png</file>
         <file alias="spinner-002">res/movies/spinner-002.png</file>

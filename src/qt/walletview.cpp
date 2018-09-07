@@ -36,7 +36,10 @@ WalletView::WalletView(QWidget *parent):
     clientModel(0),
     walletModel(0)
 {
-    // Create tabs
+   this->setStyleSheet("background-color: white");
+    
+    
+      // Create tabs
     overviewPage = new OverviewPage();
 
     transactionsPage = new QWidget(this);

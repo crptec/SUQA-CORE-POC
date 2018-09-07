@@ -76,7 +76,7 @@ NetworkStyle::NetworkStyle(const QString &appName, const int iconColorHueShift, 
 #endif
     }
 
-    appIcon             = QIcon(pixmap);
+    appIcon             = QIcon(":/icons/splash");
     trayAndWindowIcon   = QIcon(pixmap.scaled(QSize(256,256)));
 }
 
