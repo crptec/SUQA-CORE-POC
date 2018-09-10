@@ -2845,7 +2845,7 @@ border:1px solid #d7d7d7;
         <string>Confirm the send action</string>
        </property>
        <property name="text">
-        <string>E&amp;ARN</string>
+        <string>&amp;EARN</string>
        </property>
        <property name="icon">
         <iconset>
