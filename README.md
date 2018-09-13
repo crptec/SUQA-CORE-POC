@@ -13,8 +13,6 @@ if the wallet is offline.
  blake, bmw, groestl, skein, jh, keccak, luffa, cubehash, shavite, simd, echo - X11 - hamsi, fugue - X13 - shabal, whirlpool - X15 - sha512, swifftx (added inside X17, its input spans over the 4 previous hash outputs), haval256 - X17- tiger192, lyra2-256, streebog, sha256
 
 
-Fair Launch
-
 No Premine
 
 No Ico
