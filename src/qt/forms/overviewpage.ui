@@ -797,7 +797,7 @@ min-width:490px;
 
 QWidget .QFrame#frame &gt; .QLabel {
 min-width:190px;
-font-weight:normal;
+font-weight:bold;
 min-height:30px;
 }
 
@@ -805,7 +805,7 @@ QWidget .QFrame#frame .QLabel#label_5 { /* Wallet Label */
 qproperty-alignment: 'AlignVCenter | AlignRight';
 min-width:160px;
 background-color:transparent;
-color:#f4f4f5;
+color:#183862;
 margin-right:5px;
 padding-right:5px;
 }
@@ -1139,15 +1139,15 @@ margin-top:15px;
 background-repeat:none;
 }
 
-QWidget .QFrame#frame_2 .QLabel#label_4 { /* Recent Transactions Label */
+QWidget .QFrame#frame_2 .QLabel#label_4 { /* Recent Transactions Label__  */
 min-width:180px;
-color:#999;
+color:#183862;
 margin-left:0px;
 margin-top:30px;
 margin-right:5px;
 padding-right:5px;
 font-weight:normal;
-font-size:18px;
+font-size:14px;
 font-weight:bold;
 min-height:24px;
 }
