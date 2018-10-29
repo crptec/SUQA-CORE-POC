@@ -1271,7 +1271,7 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
 
 bool IsInitialBlockDownload()
 {
-    return false;
+    //return false;
     //This can probably be renabled after chain is a few hundred blocks old
 
     const CChainParams& chainParams = Params();
@@ -5043,7 +5043,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
             return true;
 
         // Address refresh broadcast
-        static int64_t nLastRebroadcast;
+        static int64_t nLastRebroadcast = 0;
         if (!IsInitialBlockDownload() && (GetTime() - nLastRebroadcast > 24 * 60 * 60))
         {
             LOCK(cs_vNodes);
