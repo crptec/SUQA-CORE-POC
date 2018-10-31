@@ -122,33 +122,7 @@ background-color:#f2f2f2;
 
 /*******************************************************/
 
-QPushButton { /* Global Button Style */
-background-color:qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #4ca5dc, stop: .1 #2c85cc, stop: .95 #2c85cc, stop: 1 #1D80B5);
-border:0;
-border-radius:3px;
-color:#ffffff;
-font-size:12px;
-font-weight:normal;
-height: 26px;
-padding-left:25px;
-padding-right:25px;
-padding-top:5px;
-padding-bottom:5px;
-margin-right: 10px;
-}
 
-QPushButton:hover {
-background-color:qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #4ca5dc, stop: .1 #4ca5dc, stop: .95 #4ca5dc, stop: 1 #1D80B5);
-}
-
-QPushButton:focus {
-border:none;
-outline:none;
-}
-
-QPushButton:pressed {
-border:1px solid #333;
-}
 
 QComboBox { /* Dropdown Menus */
 border:1px solid #82C3E6;
@@ -1702,7 +1676,7 @@ border:1px solid #d7d7d7;
                <string/>
               </property>
               <property name="icon">
-               <iconset>
+               <iconset resource="../bitcoin.qrc">
                 <normaloff>:/icons/warning</normaloff>
                 <disabledoff>:/icons/warning</disabledoff>:/icons/warning</iconset>
               </property>
@@ -2085,11 +2059,17 @@ border:1px solid #d7d7d7;
               <property name="toolTip">
                <string>The displayed information may be out of date. Your wallet automatically synchronizes with the SUQA network after a connection is established, but this process has not completed yet.</string>
               </property>
+              <property name="styleSheet">
+               <string notr="true">QObject #labelTransactionsStatus {
+padding-right : 15px;
+}
+</string>
+              </property>
               <property name="text">
                <string/>
               </property>
               <property name="icon">
-               <iconset>
+               <iconset resource="../bitcoin.qrc">
                 <normaloff>:/icons/warning</normaloff>
                 <disabledoff>:/icons/warning</disabledoff>:/icons/warning</iconset>
               </property>
@@ -2193,7 +2173,7 @@ border:1px solid #d7d7d7;
        <string>Status</string>
       </property>
       <property name="textAlignment">
-       <set>AlignLeft|AlignVCenter</set>
+       <set>AlignLeading|AlignVCenter</set>
       </property>
      </column>
      <column>
@@ -2201,7 +2181,7 @@ border:1px solid #d7d7d7;
        <string>Principal</string>
       </property>
       <property name="textAlignment">
-       <set>AlignLeft|AlignVCenter</set>
+       <set>AlignLeading|AlignVCenter</set>
       </property>
      </column>
      <column>
@@ -2209,7 +2189,7 @@ border:1px solid #d7d7d7;
        <string>Accrued Interest</string>
       </property>
       <property name="textAlignment">
-       <set>AlignLeft|AlignVCenter</set>
+       <set>AlignLeading|AlignVCenter</set>
       </property>
      </column>
      <column>
@@ -2217,7 +2197,7 @@ border:1px solid #d7d7d7;
        <string>Accrued Value</string>
       </property>
       <property name="textAlignment">
-       <set>AlignLeft|AlignVCenter</set>
+       <set>AlignLeading|AlignVCenter</set>
       </property>
      </column>
      <column>
@@ -2225,7 +2205,7 @@ border:1px solid #d7d7d7;
        <string>On Maturation</string>
       </property>
       <property name="textAlignment">
-       <set>AlignLeft|AlignVCenter</set>
+       <set>AlignLeading|AlignVCenter</set>
       </property>
      </column>
      <column>
@@ -2233,7 +2213,7 @@ border:1px solid #d7d7d7;
        <string>Term (Days)</string>
       </property>
       <property name="textAlignment">
-       <set>AlignLeft|AlignVCenter</set>
+       <set>AlignLeading|AlignVCenter</set>
       </property>
      </column>
      <column>
@@ -2241,7 +2221,7 @@ border:1px solid #d7d7d7;
        <string>Deposit Block</string>
       </property>
       <property name="textAlignment">
-       <set>AlignLeft|AlignVCenter</set>
+       <set>AlignLeading|AlignVCenter</set>
       </property>
      </column>
      <column>
@@ -2249,7 +2229,7 @@ border:1px solid #d7d7d7;
        <string>Maturation Block</string>
       </property>
       <property name="textAlignment">
-       <set>AlignLeft|AlignVCenter</set>
+       <set>AlignLeading|AlignVCenter</set>
       </property>
      </column>
      <column>
@@ -2257,7 +2237,7 @@ border:1px solid #d7d7d7;
        <string>Estimated Date</string>
       </property>
       <property name="textAlignment">
-       <set>AlignLeft|AlignVCenter</set>
+       <set>AlignLeading|AlignVCenter</set>
       </property>
      </column>
     </widget>
@@ -2431,7 +2411,7 @@ border:1px solid #d7d7d7;
   </widget>
  </widget>
  <resources>
-  <include location="../../../../../../Desktop/suqa 04.09.2018 yedek/SUQA/src/qt/bitcoin.qrc"/>
+  <include location="../bitcoin.qrc"/>
  </resources>
  <connections/>
 </ui>
