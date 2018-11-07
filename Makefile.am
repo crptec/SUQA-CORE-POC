@@ -10,10 +10,11 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libbitcoinconsensus.pc
 endif
 
-BITCOIND_BIN=$(top_builddir)/src/SUQAd$(EXEEXT)
-BITCOIN_QT_BIN=$(top_builddir)/src/qt/SUQA-qt$(EXEEXT)
-BITCOIN_CLI_BIN=$(top_builddir)/src/SUQA-cli$(EXEEXT)
-BITCOIN_WIN_INSTALLER=$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-setup$(EXEEXT)
+SUQAD_BIN=$(top_builddir)/src/SUQAd$(EXEEXT)
+SUQA_QT_BIN=$(top_builddir)/src/qt/SUQA-qt$(EXEEXT)
+SUQA_CLI_BIN=$(top_builddir)/src/SUQA-cli$(EXEEXT)
+SUQA_TX_BIN=$(top_builddir)/src/SUQA-tx$(EXEEXT)
+SUQA_WIN_PACKAGE=$(PACKAGE)-WIN-PACKAGE
 
 empty :=
 space := $(empty) $(empty)
@@ -32,11 +33,6 @@ OSX_PLIST=$(top_srcdir)/share/qt/Info.plist #not installed
 OSX_QT_TRANSLATIONS = da,de,es,hu,ru,uk,zh_CN,zh_TW
 
 DIST_DOCS = $(wildcard doc/*.md) $(wildcard doc/release-notes/*.md)
-
-WINDOWS_PACKAGING = $(top_srcdir)/share/pixmaps/bitcoin.ico \
-  $(top_srcdir)/share/pixmaps/nsis-header.bmp \
-  $(top_srcdir)/share/pixmaps/nsis-wizard.bmp \
-  $(top_srcdir)/doc/README_windows.txt
 
 OSX_PACKAGING = $(OSX_DEPLOY_SCRIPT) $(OSX_FANCY_PLIST) $(OSX_INSTALLER_ICONS) \
   $(top_srcdir)/contrib/macdeploy/$(OSX_BACKGROUND_SVG) \
@@ -62,13 +58,17 @@ distcheck-hook:
 distcleancheck:
 	@:
 
-$(BITCOIN_WIN_INSTALLER): all-recursive
+$(SUQA_WIN_PACKAGE): all-recursive
 	$(MKDIR_P) $(top_builddir)/release
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(BITCOIND_BIN) $(top_builddir)/release
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(BITCOIN_QT_BIN) $(top_builddir)/release
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(BITCOIN_CLI_BIN) $(top_builddir)/release
-	@test -f $(MAKENSIS) && $(MAKENSIS) -V2 $(top_builddir)/share/setup.nsi || \
-	  echo error: could not build $@
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQAD_BIN) $(top_builddir)/release
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_QT_BIN) $(top_builddir)/release
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_CLI_BIN) $(top_builddir)/release
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_TX_BIN) $(top_builddir)/release
+	@test -f $(SZA) && \
+		$(SZA) a -sfx$(top_builddir)/share/7z.sfx -m0=lzma2 -mx=9 $(top_builddir)/release/$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-GUI.exe $(top_builddir)/release/SUQA-qt.exe && \
+		$(SZA) a -sfx$(top_builddir)/share/7z.sfx -m0=lzma2 -mx=9 $(top_builddir)/release/$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-CLI.exe $(top_builddir)/release/SUQA-tx.exe $(top_builddir)/release/SUQAd.exe $(top_builddir)/release/SUQA-cli.exe && \
+		rm -f $(top_builddir)/release/SUQA-qt.exe $(top_builddir)/release/SUQA-cli.exe $(top_builddir)/release/SUQA-tx.exe $(top_builddir)/release/SUQA-tx.exe $(top_builddir)/release/SUQAd.exe || \
+        echo error: could not build $@
 	@echo built $@
 
 $(if $(findstring src/,$(MAKECMDGOALS)),$(MAKECMDGOALS), none): FORCE
@@ -90,7 +90,7 @@ $(OSX_APP)/Contents/Resources/bitcoin.icns: $(OSX_INSTALLER_ICONS)
 	$(MKDIR_P) $(@D)
 	$(INSTALL_DATA) $< $@
 
-$(OSX_APP)/Contents/MacOS/SUQA-Qt: $(BITCOIN_QT_BIN)
+$(OSX_APP)/Contents/MacOS/SUQA-Qt: $(SUQA_QT_BIN)
 	$(MKDIR_P) $(@D)
 	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM)  $< $@
 
@@ -144,16 +144,16 @@ appbundle: $(OSX_APP_BUILT)
 deploy: $(OSX_DMG)
 endif
 if TARGET_WINDOWS
-deploy: $(BITCOIN_WIN_INSTALLER)
+deploy: $(SUQA_WIN_PACKAGE)
 endif
 
-$(BITCOIN_QT_BIN): FORCE
+$(SUQA_QT_BIN): FORCE
 	$(MAKE) -C src qt/$(@F)
 
-$(BITCOIND_BIN): FORCE
+$(SUQAD_BIN): FORCE
 	$(MAKE) -C src $(@F)
 
-$(BITCOIN_CLI_BIN): FORCE
+$(SUQA_CLI_BIN): FORCE
 	$(MAKE) -C src $(@F)
 
 if USE_LCOV
@@ -218,9 +218,9 @@ endif
 
 dist_noinst_SCRIPTS = autogen.sh
 
-EXTRA_DIST = $(top_srcdir)/share/genbuild.sh qa/pull-tester/rpc-tests.sh qa/pull-tester/run-bitcoin-cli qa/rpc-tests $(DIST_DOCS) $(WINDOWS_PACKAGING) $(OSX_PACKAGING)
+EXTRA_DIST = $(top_srcdir)/share/genbuild.sh qa/pull-tester/rpc-tests.sh qa/pull-tester/run-bitcoin-cli qa/rpc-tests $(DIST_DOCS) $(OSX_PACKAGING)
 
-CLEANFILES = $(OSX_DMG) $(BITCOIN_WIN_INSTALLER)
+CLEANFILES = $(OSX_DMG) $(SUQA_WIN_PACKAGE)
 
 .INTERMEDIATE: $(COVERAGE_INFO)
 
