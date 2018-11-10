@@ -65,9 +65,11 @@ $(SUQA_WIN_PACKAGE): all-recursive
 	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_CLI_BIN) $(top_builddir)/release
 	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_TX_BIN) $(top_builddir)/release
 	@test -f $(SZA) && \
-		$(SZA) a -sfx$(top_builddir)/share/7z.sfx -m0=lzma2 -mx=9 $(top_builddir)/release/$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-GUI.exe $(top_builddir)/release/SUQA-qt.exe && \
-		$(SZA) a -sfx$(top_builddir)/share/7z.sfx -m0=lzma2 -mx=9 $(top_builddir)/release/$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-CLI.exe $(top_builddir)/release/SUQA-tx.exe $(top_builddir)/release/SUQAd.exe $(top_builddir)/release/SUQA-cli.exe && \
-		rm -f $(top_builddir)/release/SUQA-qt.exe $(top_builddir)/release/SUQA-cli.exe $(top_builddir)/release/SUQA-tx.exe $(top_builddir)/release/SUQA-tx.exe $(top_builddir)/release/SUQAd.exe || \
+		$(SZA) a -m0=lzma2 -mx=9 $(top_builddir)/release/$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-GUI.7z $(top_builddir)/release/SUQA-qt.exe && \
+		$(SZA) a -m0=lzma2 -mx=9 $(top_builddir)/release/$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-CLI.7z $(top_builddir)/release/SUQA-tx.exe $(top_builddir)/release/SUQAd.exe $(top_builddir)/release/SUQA-cli.exe && \
+		cat $(top_builddir)/share/7z.sfx $(top_builddir)/release/$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-GUI.7z > $(top_builddir)/release/$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-GUI.exe && \
+		cat $(top_builddir)/share/7z.sfx $(top_builddir)/release/$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-CLI.7z > $(top_builddir)/release/$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-CLI.exe && \
+		rm -f $(top_builddir)/release/*.7z $(top_builddir)/release/SUQA-qt.exe $(top_builddir)/release/SUQA-cli.exe $(top_builddir)/release/SUQA-tx.exe $(top_builddir)/release/SUQA-tx.exe $(top_builddir)/release/SUQAd.exe || \
         echo error: could not build $@
 	@echo built $@
 
