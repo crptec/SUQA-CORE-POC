@@ -122,11 +122,11 @@ Then build using:
     make HOST=i686-w64-mingw32
     cd ..
     ./autogen.sh # not required when building from tarball
-    CONFIG_SITE=$PWD/depends/i686-w64-mingw32/share/config.site ./configure --prefix=/
+    CONFIG_SITE=$PWD/depends/i686-w64-mingw32/share/config.site ./configure --prefix=$PWD/depends/i686-w64-mingw32
     make
     
 ## Packaging for Windows
-Suqa uses lzma2 compression with self extractor sfx for the packaged release binaries. Thus, before packaginf make sure your host OS has 7za executable available **before** you execute configure script. To install this dependency execute
+Suqa uses lzma2 compression with self extractor sfx for the packaged release binaries. Thus, before packaging make sure your host OS has 7za executable available **before** you execute configure script. To install this dependency execute
     
     sudo apt install p7zip
     
