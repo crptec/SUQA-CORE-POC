@@ -49,7 +49,8 @@ class CValidationState;
 struct CNodeStateStats;
 
 
-static int MINERHODLINGPERIOD=561*365;		// 561 = blocks per day with original hodlcoin target spacing
+//static int MINERHODLINGPERIOD=561*365;		// 561 = blocks per day
+#define MINERHODLINGPERIOD 720*365
 
 #define DEV_ADDRESS "SZLafuDjnjqh2tAfTrG9ZAGzbP8HkzNXvB"
 #define DEV_ADDRESS_TEST "SZLafuDjnjqh2tAfTrG9ZAGzbP8HkzNXvB"
