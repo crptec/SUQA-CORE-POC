@@ -38,10 +38,11 @@ distcheck-hook:
 distcleancheck:
 	@:
 
+PLATF = $(shell echo "$(host)" | cut -f1,2 -d"-")
 REL_DIR = $(top_srcdir)/release
-STG_DIR = $(REL_DIR)/$(host)
+STG_DIR = $(REL_DIR)/$(PLATF)
 
-PACK_NAME = $(REL_DIR)/$(PACKAGE)-$(PACKAGE_VERSION)-$(host)-CORE
+PACK_NAME = $(REL_DIR)/$(PACKAGE)-$(PACKAGE_VERSION)-$(PLATF)-CORE
 
 SUQA-WIN-PACKAGE: all-recursive
 	$(MKDIR_P) $(STG_DIR)

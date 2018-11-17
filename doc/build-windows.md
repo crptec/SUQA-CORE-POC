@@ -132,7 +132,7 @@ Suqa uses lzma2 compression with self extractor sfx for the packaged release bin
     
 After dependecies are built and configure script is executed as usual run 
 
-	make SUQA-WIN-PACKAGE
+	make deploy
     
 to generate self extracting packages under release folder
 

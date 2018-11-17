@@ -115,3 +115,40 @@ Other commands:
     ./bitcoind -daemon # to start the bitcoin daemon.
     ./bitcoin-cli --help  # for a list of command-line options.
     ./bitcoin-cli help    # When the daemon is running, to get a list of RPC commands
+
+Cross Compiling from linux
+====================================
+
+
+The first step is to install necessary compiler and toolset in the linux machine that you are going to cross compile from. The procedure will first compile Clang which can cross compile for OSX from linux, to cross compile clang your machine supposed to have native compiler on it first. To do so, on Ubuntu machine execute:
+
+    sudo apt update
+    sudo apt upgrade
+    sudo apt install build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git
+
+Then other development packages are required for Clang compiler and its toolchain to be compiled and also build system to function properly, again on Ubuntu, install following packages.
+
+    sudo apt install ca-certificates curl librsvg2-bin libtiff-tools libtool automake faketime bsdmainutils cmake imagemagick libcap-dev libz-dev libbz2-dev python python-dev python-setuptools fonts-tuffy graphicsmagick-imagemagick-compat
+
+After all packages are installed in the linux machine, you will also need Mas OS SDK for generic c libraries and os level interfacing. This SDK can be downloaded from Apple Developers Website, current buildsys works with SDK version 10.11 and it is expected to be under ./depends/SDKs/MacOSX10.11.sdk/ folder. SDK Version and the path can be overriden with OSX_SDK_VERSION and OSX_SDK arguments respectively for custom configurations. You can find below command sequence that retrieves SDK from a remote url and extracts to defult folder location
+
+    wget --no-check-certificate https://...urlto.../MacOSX10.11.sdk.tar.xz
+    mkdir -p SDKs
+    tar -xvf MacOSX10.11.sdk.tar.xz -C ./SDKs
+
+Now that OSX SDK is ready, dependencies need to be compiled first to cross compile SUQA itself. To do so, you just need to pass HOST=x86_64-apple-darwin parameter for the make file under depends folder. Buildsys will handle the rest
+
+    cd ./depends
+    make HOST=x86_64-apple-darwin
+
+After dependencies are finished of cross-compiling, navigate to root folder and compile the project with the new cross compilation host prefix as below. One thing that is important, SUOQA Core on Osx need to be compiled with QT5
+
+    cd ..
+    ./autogen.sh # not required when building from tarball
+    CONFIG_SITE=$PWD/depends/x86_64-apple-darwin/share/config.site ./configure --prefix=$PWD/depends/x86_64-apple-darwin --with-gui=qt5
+    make
+
+To generate .dmg files under /release folder, type
+
+    make deploy
+
