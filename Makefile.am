@@ -51,8 +51,9 @@ SUQA-WIN-PACKAGE: all-recursive
 	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_CLI_BIN) $(STG_DIR)
 	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_TX_BIN) $(STG_DIR)
 	@test -f $(SZA) && \
-		$(SZA) a -m0=lzma2 -mx=9 $(STG_DIR)-CORE.7z $(STG_DIR)/SUQA-qt.exe $(STG_DIR)/SUQA-tx.exe $(STG_DIR)/SUQAd.exe $(STG_DIR)/SUQA-cli.exe && \
-		cat $(top_builddir)/share/7z.sfx $(STG_DIR)-CORE.7z > $(PACK_NAME).exe && \
+		$(SZA) a -m0=lzma2 -mx=9 $(STG_DIR)/SUQA-CORE.7z $(STG_DIR)/SUQA-qt.exe $(STG_DIR)/SUQA-tx.exe $(STG_DIR)/SUQAd.exe $(STG_DIR)/SUQA-cli.exe && \
+		cat $(top_builddir)/share/7z.sfx $(STG_DIR)/SUQA-CORE.7z > $(STG_DIR)/SUQA-CORE.exe && \
+		zip -1 -j $(PACK_NAME).zip $(STG_DIR)/SUQA-CORE.exe || \
 	        echo error: could not build $@
 	@echo built $@
 
@@ -87,12 +88,6 @@ SUQA-OSX-APP: all-recursive
 	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_TX_BIN) $(OSXAPP_DIR)/Contents/MacOS/SUQA-tx
 	echo '{	CFBundleDisplayName = "$(PACKAGE_NAME)"; CFBundleName = "$(PACKAGE_NAME)"; }' > $(OSXAPP_DIR)/Contents/Resources/Base.lproj/InfoPlist.strings
 
-if BUILD_DARWIN
-$(OSX_DMG): $(OSX_APP_BUILT) $(OSX_PACKAGING)
-	$(OSX_DEPLOY_SCRIPT) $(OSX_APP) -add-qt-tr $(OSX_QT_TRANSLATIONS) -translations-dir=$(QT_TRANSLATION_DIR) -dmg -fancy $(OSX_FANCY_PLIST) -verbose 2 -volname $(OSX_VOLNAME)
-
-deploydir: $(OSX_DMG)
-else
 SUQA-OSX-DMG: SUQA-OSX-APP
 	@rm -rf $(OSXISO_DIR)
 	INSTALLNAMETOOL=$(INSTALLNAMETOOL)  OTOOL=$(OTOOL) STRIP=$(STRIP) $(OSX_DEPLOY_SCRIPT) \
@@ -104,12 +99,12 @@ SUQA-OSX-DMG: SUQA-OSX-APP
 	$(MKDIR_P) $(OSXISO_DIR)/.background
 	cp -f $(OSX_BACKGROUND_IMAGE) $(OSXISO_DIR)/.background/
 	$(GENISOIMAGE) -no-cache-inodes -D -l -probe -V "$(OSX_VOLNAME)" -no-pad -r -apple -o $(PACK_NAME).dmg $(OSXISO_DIR)
-endif
 
 if TARGET_DARWIN
 appbundle: SUQA-OSX-APP
 deploy: SUQA-OSX-DMG
 endif
+
 if TARGET_WINDOWS
 deploy: SUQA-WIN-PACKAGE
 endif
