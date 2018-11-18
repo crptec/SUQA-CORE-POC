@@ -42,7 +42,7 @@ PLATF = $(shell echo "$(host)" | cut -f1,2 -d"-")
 REL_DIR = $(top_srcdir)/release
 STG_DIR = $(REL_DIR)/$(PLATF)
 
-PACK_NAME = $(REL_DIR)/$(PACKAGE)-$(PACKAGE_VERSION)-$(PLATF)-CORE
+PACK_NAME = $(REL_DIR)/$(PACKAGE)-CORE-$(PACKAGE_VERSION)-$(PLATF)
 
 SUQA-WIN-PACKAGE: all-recursive
 	$(MKDIR_P) $(STG_DIR)
