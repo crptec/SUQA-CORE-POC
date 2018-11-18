@@ -17,7 +17,7 @@
   <string>APPL</string>
 
   <key>CFBundleGetInfoString</key>
-  <string>@CLIENT_VERSION_MAJOR@.@CLIENT_VERSION_MINOR@.@CLIENT_VERSION_REVISION@, Copyright © 2009-@COPYRIGHT_YEAR@ The HOdlcoin Core developers</string>
+  <string>@CLIENT_VERSION_MAJOR@.@CLIENT_VERSION_MINOR@.@CLIENT_VERSION_REVISION@, Copyright © @COPYRIGHT_YEAR@ The SUQAcoin Core developers</string>
 
   <key>CFBundleShortVersionString</key>
   <string>@CLIENT_VERSION_MAJOR@.@CLIENT_VERSION_MINOR@.@CLIENT_VERSION_REVISION@</string>
@@ -29,16 +29,16 @@
   <string>????</string>
 
   <key>CFBundleExecutable</key>
-  <string>HOdlcoin-Qt</string>
+  <string>SUQA-qt</string>
   
   <key>CFBundleName</key>
-  <string>HOdlcoin-Qt</string>
+  <string>SUQA-qt</string>
 
   <key>LSHasLocalizedDisplayName</key>
   <true/>
 
   <key>CFBundleIdentifier</key>
-  <string>org.hodlcoinfoundation.HOdlcoin-Qt</string>
+  <string>org.suqacoinfoundation.SUQA-CORE</string>
 
   <key>CFBundleURLTypes</key>
   <array>
@@ -46,10 +46,10 @@
       <key>CFBundleTypeRole</key>
       <string>Editor</string>
       <key>CFBundleURLName</key>
-      <string>org.hodlcoin.HOdlcoinPayment</string>
+      <string>org.suqa.suqapayment</string>
       <key>CFBundleURLSchemes</key>
       <array>
-        <string>hodlcoin</string>
+        <string>SUQA</string>
       </array>
     </dict>
   </array>
@@ -58,9 +58,9 @@
   <array>
     <dict>
       <key>UTTypeIdentifier</key>
-      <string>org.hodlcoin.paymentrequest</string>
+      <string>org.suqa.paymentrequest</string>
       <key>UTTypeDescription</key>
-      <string>HOdlcoin payment request</string>
+      <string>SUQA payment request</string>
       <key>UTTypeConformsTo</key>
       <array>
         <string>public.data</string>
@@ -68,10 +68,10 @@
       <key>UTTypeTagSpecification</key>
       <dict>
         <key>public.mime-type</key>
-        <string>application/x-hodlcoin-payment-request</string>
+        <string>application/x-suqa-payment-request</string>
         <key>public.filename-extension</key>
         <array>
-          <string>hodlcoinpaymentrequest</string>
+          <string>suqapaymentrequest</string>
         </array>
       </dict>
     </dict>
@@ -84,7 +84,7 @@
       <string>Editor</string>
       <key>LSItemContentTypes</key>
       <array>
-        <string>org.hodlcoin.paymentrequest</string>
+        <string>org.suqa.paymentrequest</string>
       </array>
       <key>LSHandlerRank</key>
       <string>Owner</string>
