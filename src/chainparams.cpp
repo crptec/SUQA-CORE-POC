@@ -182,13 +182,13 @@ public:
 
         //! Modify the testnet genesis block so the timestamp is valid for a later start.
         genesis.nTime = 1457163389;
-        genesis.nNonce = 1989891989;
+        genesis.nNonce = 2962201989;
 
         //genesis.nStartLocation = 240876;
         //genesis.nFinalCalculation = 2094347097;
 
 
-        if(genesis.GetHash() != uint256S("00d655aae75ceef9bc13fd8c6168177746ce85286d11ef56de959f4e9b6ff6af") ){
+        if(genesis.GetHash() != uint256S("0000d4abdf9cf0bd17e26d806ba18ce207622b1f5dfcfa8d7ffd5c747d12bb98") ){
             arith_uint256 hashTarget = arith_uint256().SetCompact(genesis.nBits);
             uint256 thash;
             while(true){
