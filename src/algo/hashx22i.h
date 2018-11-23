@@ -131,10 +131,10 @@ static unsigned char pblank[1];
     sph_sha512 (&ctx_sha2, static_cast<const void*>(&hash[14]), 64);
     sph_sha512_close(&ctx_sha2, static_cast<void*>(&hash[15]));
 
-    //unsigned char temp[SWIFFTX_INPUT_BLOCK_SIZE] = {0};
-    //memcpy(temp, &hash[19], 64);
+    unsigned char temp[SWIFFTX_OUTPUT_BLOCK_SIZE] = {0};
     InitializeSWIFFTX();
-    ComputeSingleSWIFFTX((unsigned char*)&hash[12], (unsigned char*)&hash[16], false);
+    ComputeSingleSWIFFTX((unsigned char*)&hash[12], temp, false);
+    memcpy((unsigned char*)&hash[16], temp, 64);
 
     sph_haval256_5_init(&ctx_haval);
     sph_haval256_5 (&ctx_haval, static_cast<const void*>(&hash[16]), 64);
