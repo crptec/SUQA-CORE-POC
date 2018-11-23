@@ -343,7 +343,7 @@ public:
         block.nNonce            = nNonce;
         //block.nStartLocation    = nStartLocation;
         //block.nFinalCalculation = nFinalCalculation;
-        return block.GetPoWHash();
+        return block.GetHash();
     }
 
 

@@ -159,28 +159,7 @@ BITCOIN_CORE_H = \
   wallet/db.h \
   wallet/wallet.h \
   wallet/wallet_ismine.h \
-  wallet/walletdb.h \
-  aescache.h \
-  algo/sph_groestl.h \
-  algo/sph_types.h \
-  algo/sph_blake.h \
-  algo/sph_bmw.h \
-  algo/sph_jh.h \
-  algo/sph_keccak.h \
-  algo/sph_skein.h \
-  algo/sph_luffa.h \
-  algo/sph_cubehash.h \
-  algo/sph_simd.h \
-  algo/sph_echo.h \
-  algo/sph_shavite.h \
-  algo/sph_sha2.h \
-  algo/sph_haval.h \
-  algo/sph_tiger.h \
-  algo/lyra2.h \
-  algo/sponge.h \
-  algo/gost_streebog.h \
-  algo/SWIFFTX/SWIFFTX.h \
-  algo/hashx22i.h
+  wallet/walletdb.h
 
 
 JSON_H = \
@@ -259,52 +238,7 @@ crypto_libbitcoin_crypto_a_SOURCES = \
   crypto/sha256.cpp \
   crypto/sha256.h \
   crypto/sha512.cpp \
-  crypto/sha512.h
-
-# univalue JSON library
-univalue_libbitcoin_univalue_a_SOURCES = \
-  univalue/univalue.cpp \
-  univalue/univalue.h \
-  univalue/univalue_escapes.h \
-  univalue/univalue_read.cpp \
-  univalue/univalue_write.cpp
-
-libbitcoin_crypto_x86_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(CRYPTO_X86_CXXFLAGS) $(CRYPTO_AES_CXXFLAGS) $(CRYPTO_AVX2_CXXFLAGS)
-libbitcoin_crypto_x86_a_SOURCES = \
-  aes.cpp \
-  sha512.cpp
-
-# common: shared between SUQAd, and SUQA-qt and non-server tools
-libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
-libbitcoin_common_a_SOURCES = \
-  amount.cpp \
-  arith_uint256.cpp \
-  base58.cpp \
-  chainparams.cpp \
-  txdb.cpp \
-  leveldbwrapper.cpp \
-  aescache.cpp \
-  coins.cpp \
-  compressor.cpp \
-  core_read.cpp \
-  core_write.cpp \
-  eccryptoverify.cpp \
-  ecwrapper.cpp \
-  hash.cpp \
-  key.cpp \
-  keystore.cpp \
-  netbase.cpp \
-  patternsearch.cpp \
-  primitives/block.cpp \
-  primitives/transaction.cpp \
-  protocol.cpp \
-  pubkey.cpp \
-  scheduler.cpp \
-  script/interpreter.cpp \
-  script/script.cpp \
-  script/script_error.cpp \
-  script/sign.cpp \
-  script/standard.cpp \
+  crypto/sha512.h \
   algo/groestl.c \
   algo/blake.c \
   algo/bmw.c \
@@ -329,6 +263,69 @@ libbitcoin_common_a_SOURCES = \
   algo/sph_sha2.c \
   algo/gost_streebog.c \
   algo/SWIFFTX/SWIFFTX.c \
+  algo/sph_groestl.h \
+  algo/sph_types.h \
+  algo/sph_blake.h \
+  algo/sph_bmw.h \
+  algo/sph_jh.h \
+  algo/sph_keccak.h \
+  algo/sph_skein.h \
+  algo/sph_luffa.h \
+  algo/sph_cubehash.h \
+  algo/sph_simd.h \
+  algo/sph_echo.h \
+  algo/sph_shavite.h \
+  algo/sph_sha2.h \
+  algo/sph_haval.h \
+  algo/sph_tiger.h \
+  algo/lyra2.h \
+  algo/sponge.h \
+  algo/gost_streebog.h \
+  algo/SWIFFTX/SWIFFTX.h
+
+# univalue JSON library
+univalue_libbitcoin_univalue_a_SOURCES = \
+  univalue/univalue.cpp \
+  univalue/univalue.h \
+  univalue/univalue_escapes.h \
+  univalue/univalue_read.cpp \
+  univalue/univalue_write.cpp
+
+libbitcoin_crypto_x86_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(CRYPTO_X86_CXXFLAGS) $(CRYPTO_AES_CXXFLAGS) $(CRYPTO_AVX2_CXXFLAGS)
+libbitcoin_crypto_x86_a_SOURCES = \
+  aes.cpp \
+  sha512.cpp
+
+# common: shared between SUQAd, and SUQA-qt and non-server tools
+libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
+libbitcoin_common_a_SOURCES = \
+  amount.cpp \
+  arith_uint256.cpp \
+  base58.cpp \
+  chainparams.cpp \
+  txdb.cpp \
+  leveldbwrapper.cpp \
+  coins.cpp \
+  compressor.cpp \
+  core_read.cpp \
+  core_write.cpp \
+  eccryptoverify.cpp \
+  ecwrapper.cpp \
+  hash.cpp \
+  key.cpp \
+  keystore.cpp \
+  netbase.cpp \
+  patternsearch.cpp \
+  primitives/block.cpp \
+  primitives/transaction.cpp \
+  protocol.cpp \
+  pubkey.cpp \
+  scheduler.cpp \
+  script/interpreter.cpp \
+  script/script.cpp \
+  script/script_error.cpp \
+  script/sign.cpp \
+  script/standard.cpp \
   $(BITCOIN_CORE_H)
 
 # util: shared between all executables.
