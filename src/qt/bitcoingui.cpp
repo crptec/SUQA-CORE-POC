@@ -287,7 +287,7 @@ void BitcoinGUI::createActions()
     sendCoinsMenuAction->setStatusTip(sendCoinsAction->statusTip());
     sendCoinsMenuAction->setToolTip(sendCoinsMenuAction->statusTip());
 
-    depositCoinsAction = new QAction(SingleColorIcon(":/icons/deposit"), tr("&Deposit"), this);
+    depositCoinsAction = new QAction(SingleColorIcon(":/icons/deposit"), tr("Time-&Lock"), this);
     depositCoinsAction->setStatusTip(tr("Make a term deposit"));
     depositCoinsAction->setToolTip(depositCoinsAction->statusTip());
     depositCoinsAction->setCheckable(true);
