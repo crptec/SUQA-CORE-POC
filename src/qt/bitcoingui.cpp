@@ -459,6 +459,7 @@ void BitcoinGUI::createMenuBar()
     help->addAction(aboutQtAction);
 
 #ifdef ENABLE_WALLET
+		/*
     if(walletFrame)
     {
         QMenu *mining = appMenuBar->addMenu(tr("&Mining"));
@@ -466,6 +467,7 @@ void BitcoinGUI::createMenuBar()
         mining->addAction(miningOnAction);
         mining->addAction(miningOffAction);
     }
+    */
 #endif // ENABLE_WALLET
 }
 
