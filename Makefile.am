@@ -38,7 +38,7 @@ distcheck-hook:
 distcleancheck:
 	@:
 
-PLATF = $(host)
+PLATF ?= $(host)
 REL_DIR = $(top_srcdir)/release
 STG_DIR = $(REL_DIR)/$(PLATF)
 
@@ -111,10 +111,12 @@ SUQA-OSX-DMG: SUQA-OSX-APP
 if TARGET_DARWIN
 appbundle: SUQA-OSX-APP
 deploy: SUQA-OSX-DMG
-else if TARGET_WINDOWS
+else
+if TARGET_WINDOWS
 deploy: SUQA-WIN-PACKAGE
 else
 deploy: SUQA-LIN-PACKAGE
+endif
 endif
 
 $(SUQA_QT_BIN): FORCE
