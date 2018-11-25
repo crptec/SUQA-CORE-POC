@@ -1,5 +1,6 @@
 #/usr/bin/bash
 set -x
+set -e
 
 CUR_DIR=$(pwd)
 SCRIPT_DIR=$CUR_DIR/$(dirname "$0")
