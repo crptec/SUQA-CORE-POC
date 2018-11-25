@@ -7,7 +7,7 @@ BASE_DIR=$SCRIPT_DIR/../..
 DEP_DIR=$BASE_DIR/depends
 declare -a hosts=("OSX64" "LIN64" "WIN64" "WIN32" "LINARM" "LINARMHF" "LINARM64")
 
-OSX_SDK_RUL=https://github.com/phracker/MacOSX-SDKs/releases/download/10.13/MacOSX10.11.sdk.tar.xz
+OSX_SDK_URL=https://github.com/phracker/MacOSX-SDKs/releases/download/10.13/MacOSX10.11.sdk.tar.xz
 
 OSX64_CONF="--with-gui=qt5"
 OSX64_HOST="x86_64-apple-darwin"
