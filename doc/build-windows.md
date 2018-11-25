@@ -128,7 +128,7 @@ Then build using:
 ## Packaging for Windows
 Suqa uses lzma2 compression with self extractor sfx for the packaged release binaries. Thus, before packaging make sure your host OS has 7za executable available **before** you execute configure script. To install this dependency execute
     
-    sudo apt install p7zip
+    sudo apt install p7zip-full
     
 After dependecies are built and configure script is executed as usual run 
 

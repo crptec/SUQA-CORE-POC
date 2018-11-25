@@ -38,7 +38,7 @@ distcheck-hook:
 distcleancheck:
 	@:
 
-PLATF = $(shell echo "$(host)" | cut -f1,2 -d"-")
+PLATF ?= $(host)
 REL_DIR = $(top_srcdir)/release
 STG_DIR = $(REL_DIR)/$(PLATF)
 
@@ -46,16 +46,24 @@ PACK_NAME = $(REL_DIR)/$(PACKAGE)-CORE-$(PACKAGE_VERSION)-$(PLATF)
 
 SUQA-WIN-PACKAGE: all-recursive
 	$(MKDIR_P) $(STG_DIR)
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQAD_BIN) $(STG_DIR)
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_QT_BIN) $(STG_DIR)
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_CLI_BIN) $(STG_DIR)
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_TX_BIN) $(STG_DIR)
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQAD_BIN) $(STG_DIR) | true
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_QT_BIN) $(STG_DIR) | true
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_CLI_BIN) $(STG_DIR) | true
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_TX_BIN) $(STG_DIR) | true
 	@test -f $(SZA) && \
 		$(SZA) a -m0=lzma2 -mx=9 $(STG_DIR)/SUQA-CORE.7z $(STG_DIR)/SUQA-qt.exe $(STG_DIR)/SUQA-tx.exe $(STG_DIR)/SUQAd.exe $(STG_DIR)/SUQA-cli.exe && \
 		cat $(top_builddir)/share/7z.sfx $(STG_DIR)/SUQA-CORE.7z > $(STG_DIR)/SUQA-CORE.exe && \
 		zip -1 -j $(PACK_NAME).zip $(STG_DIR)/SUQA-CORE.exe || \
 	        echo error: could not build $@
 	@echo built $@
+
+SUQA-LIN-PACKAGE: all-recursive
+	$(MKDIR_P) $(STG_DIR)
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_QT_BIN) $(STG_DIR) | true
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQAD_BIN) $(STG_DIR) | true
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_CLI_BIN) $(STG_DIR) | true
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_TX_BIN) $(STG_DIR) | true
+	tar --ignore-failed-read -c --lzma -f $(PACK_NAME).tar.lzma -C $(STG_DIR) SUQAd SUQA-tx SUQA-cli SUQA-qt
 
 $(if $(findstring src/,$(MAKECMDGOALS)),$(MAKECMDGOALS), none): FORCE
 	$(MAKE) -C src $(patsubst src/%,%,$@)
@@ -82,10 +90,10 @@ SUQA-OSX-APP: all-recursive
 	$(INSTALL_DATA) $(OSX_INSTALLER_ICONS) $(OSXAPP_DIR)/Contents/Resources/bitcoin.icns
 	$(INSTALL_DATA) $(OSX_PLIST) $(OSXAPP_DIR)/Contents/Info.plist
 	@echo "APPL????" > $(OSXAPP_DIR)/Contents/PkgInfo
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_QT_BIN) $(OSXAPP_DIR)/Contents/MacOS/SUQA-qt
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQAD_BIN) $(OSXAPP_DIR)/Contents/MacOS/SUQAd
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_CLI_BIN) $(OSXAPP_DIR)/Contents/MacOS/SUQA-cli
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_TX_BIN) $(OSXAPP_DIR)/Contents/MacOS/SUQA-tx
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_QT_BIN) $(OSXAPP_DIR)/Contents/MacOS/SUQA-qt | true
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQAD_BIN) $(OSXAPP_DIR)/Contents/MacOS/SUQAd | true
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_CLI_BIN) $(OSXAPP_DIR)/Contents/MacOS/SUQA-cli | true
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_TX_BIN) $(OSXAPP_DIR)/Contents/MacOS/SUQA-tx | true
 	echo '{	CFBundleDisplayName = "$(PACKAGE_NAME)"; CFBundleName = "$(PACKAGE_NAME)"; }' > $(OSXAPP_DIR)/Contents/Resources/Base.lproj/InfoPlist.strings
 
 SUQA-OSX-DMG: SUQA-OSX-APP
@@ -103,10 +111,12 @@ SUQA-OSX-DMG: SUQA-OSX-APP
 if TARGET_DARWIN
 appbundle: SUQA-OSX-APP
 deploy: SUQA-OSX-DMG
-endif
-
+else
 if TARGET_WINDOWS
 deploy: SUQA-WIN-PACKAGE
+else
+deploy: SUQA-LIN-PACKAGE
+endif
 endif
 
 $(SUQA_QT_BIN): FORCE
