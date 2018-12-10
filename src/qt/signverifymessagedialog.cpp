@@ -13,7 +13,6 @@
 #include "base58.h"
 #include "init.h"
 #include "main.h" // For strMessageMagic
-#include "util.h"
 #include "wallet/wallet.h"
 
 #include <string>

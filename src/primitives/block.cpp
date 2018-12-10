@@ -10,11 +10,100 @@
 #include "utilstrencodings.h"
 #include "crypto/common.h"
 #include "arith_uint256.h"
+//#include "patternsearch.h"
+#include "aescache.h"
+#include "algo/hashx22i.h"
+
+extern CBlockAesCache *aesCache;
 
 uint256 CBlockHeader::GetHash() const
 {
-        return HashX22I(BEGIN(nVersion), END(nNonce));
+    uint256 hash;
+
+    if (aesCache) {
+        uint256 orig_hash = SerializeHash(*this);
+        if (!aesCache->ReadHash(orig_hash, hash)) {
+            hash = GetHashNoCache();
+            aesCache->WriteHash(orig_hash, hash);
+        }
+    } else {
+        hash = GetHashNoCache();
+    }
+
+    return hash;
 }
+
+uint256 CBlockHeader::GetPoWHash() const
+{
+	return HashX22I(BEGIN(nVersion), END(nNonce));
+}
+
+uint256 CBlockHeader::GetHashNoCache() const
+{
+    //uint256 midHash = GetMidHash();
+    uint256 cacheBlockHash=HashX22I(BEGIN(nVersion), END(nNonce));
+    return cacheBlockHash;
+    /*
+    if(!patternsearch::pattern_verify( midHash, nStartLocation, nFinalCalculation)){
+        return uint256S("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+    }else{
+        return cacheBlockHash;
+    }
+    */
+}
+
+uint256 CBlockHeader::GetMidHash() const
+{
+    return HashX22I(BEGIN(nVersion), END(nNonce));
+    //return SerializeHash(*this);
+}
+
+/*
+uint256 CBlockHeader::FindBestPatternHash(int& collisions,char *scratchpad,int nThreads,int* minerStopFlag) {
+
+        uint256 smallestHashSoFar = uint256S("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        uint32_t smallestHashLocation=0;
+        uint32_t smallestHashFinalCalculation=0;
+
+
+        if(nThreads==0){
+            return smallestHashSoFar;
+        }
+
+        uint256 midHash = GetMidHash();
+
+        //Threads can only be a power of 2
+
+		std::vector< std::pair<uint32_t,uint32_t> > results =patternsearch::pattern_search( midHash,scratchpad,nThreads,minerStopFlag);
+        //uint32_t candidateStartLocation=0;
+        //uint32_t candidateFinalCalculation=0;
+
+        collisions=results.size();
+        uint256 fullHash = smallestHashSoFar;
+
+        for (unsigned i=0; i < results.size(); i++) {
+
+            nStartLocation = results[i].first;
+            nFinalCalculation = results[i].second;
+            fullHash = Hash(BEGIN(nVersion), END(nFinalCalculation));
+            //LogPrintf("Consider Candidate:%s\n",fullHash.ToString());
+            //LogPrintf("against:%s\n",smallestHashSoFar.ToString());
+
+            if(UintToArith256(fullHash)<UintToArith256(smallestHashSoFar)){
+                //LogPrintf("New Best Candidate:%s\n",fullHash.ToString());
+                //if better, update location
+                //printf("best hash so far for the nonce\n");
+                smallestHashSoFar=fullHash;
+                smallestHashLocation=results[i].first;
+                smallestHashFinalCalculation=results[i].second;
+            }
+        }
+
+        nStartLocation = smallestHashLocation;
+        nFinalCalculation = smallestHashFinalCalculation;
+        return smallestHashSoFar;
+    }
+*/
 
 uint256 CBlock::BuildMerkleTree(bool* fMutated) const
 {

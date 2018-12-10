@@ -22,6 +22,8 @@ public:
     leveldb_error(const std::string& msg) : std::runtime_error(msg) {}
 };
 
+class CLevelDBWrapper;
+
 void HandleError(const leveldb::Status& status) throw(leveldb_error);
 
 /** Batch of changes queued to be written to a CLevelDBWrapper */
@@ -59,6 +61,69 @@ public:
 
         batch.Delete(slKey);
     }
+};
+
+class CLevelDBIterator
+{
+private:
+    const CLevelDBWrapper &parent;
+    leveldb::Iterator *piter;
+
+public:
+
+    /**
+     * @param[in] parent           Parent CDBWrapper instance.
+     * @param[in] piterIn          The original leveldb iterator.
+     */
+    CLevelDBIterator(const CLevelDBWrapper &parent, leveldb::Iterator *piterIn) :
+        parent(parent), piter(piterIn) { };
+    ~CLevelDBIterator();
+
+    bool Valid();
+
+    void SeekToFirst();
+
+    template<typename K> void Seek(const K& key) {
+        CDataStream ssKey(SER_DISK, CLIENT_VERSION);
+        ssKey.reserve(ssKey.GetSerializeSize(key));
+        ssKey << key;
+        leveldb::Slice slKey(&ssKey[0], ssKey.size());
+        piter->Seek(slKey);
+    }
+
+    void Next();
+
+    template<typename K> bool GetKey(K& key) {
+        leveldb::Slice slKey = piter->key();
+        try {
+            CDataStream ssKey(slKey.data(), slKey.data() + slKey.size(), SER_DISK, CLIENT_VERSION);
+            ssKey >> key;
+        } catch (const std::exception&) {
+            return false;
+        }
+        return true;
+    }
+
+    unsigned int GetKeySize() {
+        return piter->key().size();
+    }
+
+    template<typename V> bool GetValue(V& value) {
+        leveldb::Slice slValue = piter->value();
+        try {
+            CDataStream ssValue(slValue.data(), slValue.data() + slValue.size(), SER_DISK, CLIENT_VERSION);
+            //ssValue.Xor(dbwrapper_private::GetObfuscateKey(parent));
+            ssValue >> value;
+        } catch (const std::exception&) {
+            return false;
+        }
+        return true;
+    }
+
+    unsigned int GetValueSize() {
+        return piter->value().size();
+    }
+
 };
 
 class CLevelDBWrapper
@@ -167,9 +232,15 @@ public:
     }
 
     // not exactly clean encapsulation, but it's easiest for now
+	
     leveldb::Iterator* NewIterator()
     {
         return pdb->NewIterator(iteroptions);
+    }
+	
+	CLevelDBIterator *NewIteratorDB()
+    {
+        return new CLevelDBIterator(*this, pdb->NewIterator(iteroptions));
     }
 };
 

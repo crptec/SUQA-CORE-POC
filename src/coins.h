@@ -313,10 +313,18 @@ struct CCoinsStats
 struct CTermDepositStats
 {
 	int nAddress;
-	uint64_t nTransactions;
+	uint64_t nTransactions; 
 	CAmount nTotalAmount;
-
-	CTermDepositStats() : nAddress(0), nTransactions(0), nTotalAmount(0) {}
+	
+	CAmount nValueAmount1day;
+	CAmount nValueAmount2days;
+	CAmount nValueAmount7days;
+	CAmount nValueAmount14days;
+	CAmount nValueAmount30days;
+	CAmount nValueAmountMore30days;
+	
+	CTermDepositStats() : nAddress(0), nTransactions(0), nTotalAmount(0), nValueAmount1day(0), nValueAmount2days(0), nValueAmount7days(0), nValueAmount14days(0),
+	nValueAmount30days(0), nValueAmountMore30days(0) {}
 };
 
 
@@ -340,7 +348,7 @@ public:
 
     //! Calculate statistics about the unspent transaction output set
     virtual bool GetStats(CCoinsStats &stats) const;
-
+	
 	//! Calculate statistics about term deposit
     virtual bool TermDepositStats(CTermDepositStats &stats) const;
 

@@ -148,8 +148,11 @@ enum jtokentype {
     JTOK_STRING,
 };
 
+
 extern enum jtokentype getJsonToken(std::string& tokenVal,
                                     unsigned int& consumed, const char *raw);
 extern const char *uvTypeName(UniValue::VType t);
+
+extern const UniValue NullUniValue;
 
 #endif // BITCOIN_UNIVALUE_UNIVALUE_H

@@ -47,6 +47,12 @@
 #include <boost/thread.hpp>
 #include <openssl/crypto.h>
 
+
+#include "zmq/zmqabstractnotifier.h"
+#include "zmq/zmqnotificationinterface.h"
+#include "zmq/zmqrpc.h"
+
+
 using namespace std;
 
 #ifdef ENABLE_WALLET
@@ -180,6 +186,9 @@ void Shutdown()
         if (pcoinsTip != NULL) {
             FlushStateToDisk();
         }
+        if (aesCache)
+            aesCache->Flush();
+
         delete pcoinsTip;
         pcoinsTip = NULL;
         delete pcoinscatcher;
@@ -188,7 +197,17 @@ void Shutdown()
         pcoinsdbview = NULL;
         delete pblocktree;
         pblocktree = NULL;
+        delete aesCache;
+        aesCache = NULL;
     }
+
+#if ENABLE_ZMQ
+    if (g_zmq_notification_interface) {
+        UnregisterValidationInterface(g_zmq_notification_interface);
+        delete g_zmq_notification_interface;
+        g_zmq_notification_interface = NULL;
+    }
+#endif
 #ifdef ENABLE_WALLET
     if (pwalletMain)
         pwalletMain->Flush(true);
@@ -300,6 +319,9 @@ std::string HelpMessage(HelpMessageMode mode)
 #endif
     strUsage += HelpMessageOpt("-txindex", strprintf(_("Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)"), 0));
 
+	strUsage += HelpMessageOpt("-addressindex", strprintf(_("Maintain a full address index, used to query for the balance, txids and unspent outputs for addresses (default: %u)"), DEFAULT_ADDRESSINDEX));
+    strUsage += HelpMessageOpt("-spentindex", strprintf(_("Maintain a full spent index, used to query the spending txid and input index for an outpoint (default: %u)"), DEFAULT_SPENTINDEX));
+	
     strUsage += HelpMessageGroup(_("Connection options:"));
     strUsage += HelpMessageOpt("-addnode=<ip>", _("Add a node to connect to and attempt to keep the connection open"));
     strUsage += HelpMessageOpt("-banscore=<n>", strprintf(_("Threshold for disconnecting misbehaving peers (default: %u)"), 100));
@@ -334,6 +356,16 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-whitelist=<netmask>", _("Whitelist peers connecting from the given netmask or IP address. Can be specified multiple times.") +
         " " + _("Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway"));
 
+#if ENABLE_ZMQ
+    strUsage += HelpMessageGroup(_("ZMQ options:"));
+	strUsage += HelpMessageOpt("-zmqpubhashblock=<address>",_("Enable publish hash block in <address>"));
+	strUsage += HelpMessageOpt("-zmqpubrawblock=<address>",_("Enable publish raw block in <address>"));
+	strUsage += HelpMessageOpt("-zmqpubrawtx=<address>",_("Enable publish raw transaction in <address>"));
+	strUsage += HelpMessageOpt("-zmqpubhashblockhwm=<n>",_("Set publish hash block outbound message high water mark: default n"));
+	strUsage += HelpMessageOpt("-zmqpubhashtxhwm=<n>",_("Set publish hash transaction outbound message high water mark: default n"));
+	strUsage += HelpMessageOpt("-zmqpubrawblockhwm=<n",_("Set publish raw block outbound message high water mark: default n"));
+	strUsage += HelpMessageOpt("-zmqpubrawtxhwm=<n>",_("Set publish raw transaction outbound message high water mark: default n"));
+#endif
 
 #ifdef ENABLE_WALLET
     strUsage += HelpMessageGroup(_("Wallet options:"));
@@ -953,6 +985,9 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         uiInterface.InitMessage.connect(SetRPCWarmupStatus);
         RPCServer::OnStopped(&OnRPCStopped);
         RPCServer::OnPreCommand(&OnRPCPreCommand);
+#if ENABLE_ZMQ
+		//add ZMQ to rpc server
+#endif
         StartRPCThreads();
     }
 
@@ -1105,6 +1140,11 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         }
     }
 
+    g_zmq_notification_interface = CZMQNotificationInterface::Create();
+    if (g_zmq_notification_interface) {
+        RegisterValidationInterface(g_zmq_notification_interface);
+    }
+	
     BOOST_FOREACH(string strDest, mapMultiArgs["-seednode"])
         AddOneShot(strDest);
 
@@ -1150,11 +1190,13 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     int64_t nCoinDBCache = std::min(nTotalCache / 2, (nTotalCache / 4) + (1 << 23)); // use 25%-50% of the remainder for disk cache
     nTotalCache -= nCoinDBCache;
     size_t nBlockAesCache = nTotalCache / 2 ;
+    nTotalCache -= nBlockAesCache; // use 50% for the aes cache
     nCoinCacheUsage = nTotalCache; // the rest goes to in-memory cache
 
     LogPrintf("Cache configuration:\n");
     LogPrintf("* Using %.1fMiB for block index database\n", nBlockTreeDBCache * (1.0 / 1024 / 1024));
     LogPrintf("* Using %.1fMiB for chain state database\n", nCoinDBCache * (1.0 / 1024 / 1024));
+    LogPrintf("* Using %.1fMiB for aes cache database\n", nBlockAesCache * (1.0 / 1024 / 1024));
     LogPrintf("* Using %.1fMiB for in-memory UTXO set\n", nCoinCacheUsage * (1.0 / 1024 / 1024));
 
     bool fLoaded = false;
@@ -1172,6 +1214,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
                 delete pcoinsdbview;
                 delete pcoinscatcher;
                 delete pblocktree;
+                delete aesCache;
 
                 // Detect database obfuscation by future versions of the DBWrapper
                 bool chainstateScrambled;
@@ -1181,6 +1224,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
                 pcoinsdbview = new CCoinsViewDB(nCoinDBCache, chainstateScrambled, false, fReindex);
                 pcoinscatcher = new CCoinsViewErrorCatcher(pcoinsdbview);
                 pcoinsTip = new CCoinsViewCache(pcoinscatcher);
+                aesCache = new CBlockAesCache(nBlockAesCache, false, fReindex);
 
                 if (fReindex) {
                     pblocktree->WriteReindexing(true);
@@ -1216,6 +1260,18 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
                     break;
                 }
 
+                // Check for changed -addressindex state
+                if (fAddressIndex != GetBoolArg("-addressindex", DEFAULT_ADDRESSINDEX)) {
+                    strLoadError = _("You need to rebuild the database using -reindex-chainstate to change -addressindex");
+                    break;
+                }
+
+                // Check for changed -spentindex state
+                if (fSpentIndex != GetBoolArg("-spentindex", DEFAULT_SPENTINDEX)) {
+                    strLoadError = _("You need to rebuild the database using -reindex-chainstate to change -spentindex");
+                    break;
+                }
+				
                 // Check for changed -prune state.  What we are concerned about is a user who has pruned blocks
                 // in the past, but is now trying to run unpruned.
                 if (fHavePruned && !fPruneMode) {

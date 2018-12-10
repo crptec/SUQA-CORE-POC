@@ -32,7 +32,9 @@ LIBBITCOIN_CRYPTO_X86=libbitcoin_crypto_x86.a
 LIBBITCOIN_UNIVALUE=univalue/libbitcoin_univalue.a
 LIBBITCOINQT=qt/libbitcoinqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
-
+if ENABLE_ZMQ
+LIBBITCOIN_ZMQ=libbitcoin_zmq.a
+endif
 $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
 
@@ -50,7 +52,7 @@ if ENABLE_WALLET
 BITCOIN_INCLUDES += $(BDB_CPPFLAGS)
 EXTRA_LIBRARIES += libbitcoin_wallet.a
 endif
-
+EXTRA_LIBRARIES += $(LIBBITCOIN_ZMQ)
 if BUILD_BITCOIN_LIBS
 lib_LTLIBRARIES = libbitcoinconsensus.la
 LIBBITCOIN_CONSENSUS=libbitcoinconsensus.la
@@ -159,7 +161,36 @@ BITCOIN_CORE_H = \
   wallet/db.h \
   wallet/wallet.h \
   wallet/wallet_ismine.h \
-  wallet/walletdb.h
+  wallet/walletdb.h \
+  aescache.h \
+  algo/sph_groestl.h \
+  algo/sph_types.h \
+  algo/sph_blake.h \
+  algo/sph_bmw.h \
+  algo/sph_jh.h \
+  algo/sph_keccak.h \
+  algo/sph_skein.h \
+  algo/sph_luffa.h \
+  algo/sph_cubehash.h \
+  algo/sph_simd.h \
+  algo/sph_echo.h \
+  algo/sph_shavite.h \
+  algo/sph_sha2.h \
+  algo/sph_haval.h \
+  algo/sph_tiger.h \
+  algo/lyra2.h \
+  algo/sponge.h \
+  algo/gost_streebog.h \
+  algo/SWIFFTX/SWIFFTX.h \
+  zmq/zmqabstractnotifier.h \
+  zmq/zmqconfig.h \
+  zmq/zmqnotificationinterface.h \
+  zmq/zmqpublishnotifier.h \
+  zmq/zmqrpc.h \
+  validation.h \
+  addressindex.h \
+  spentindex.h \
+  algo/hashx22i.h
 
 
 JSON_H = \
@@ -207,8 +238,15 @@ libbitcoin_server_a_SOURCES = \
   timedata.cpp \
   txmempool.cpp \
   validationinterface.cpp \
+  zmq/zmqabstractnotifier.cpp \
+  zmq/zmqnotificationinterface.cpp \
+  zmq/zmqpublishnotifier.cpp \
+  zmq/zmqrpc.cpp \
+  validation.cpp \
   $(JSON_H) \
   $(BITCOIN_CORE_H)
+
+
 
 # wallet: shared between SUQAd and SUQA-qt, but only linked
 # when wallet enabled
@@ -222,6 +260,16 @@ libbitcoin_wallet_a_SOURCES = \
   wallet/wallet_ismine.cpp \
   wallet/walletdb.cpp \
   $(BITCOIN_CORE_H)
+
+if ENABLE_ZMQ
+libbitcoin_zmq_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(ZMQ_CFLAGS)
+libbitcoin_zmq_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libbitcoin_zmq_a_SOURCES = \
+  zmq/zmqabstractnotifier.cpp \
+  zmq/zmqnotificationinterface.cpp \
+  zmq/zmqpublishnotifier.cpp \
+  zmq/zmqrpc.cpp
+endif
 
 # crypto primitives library
 crypto_libbitcoin_crypto_a_CPPFLAGS = $(BITCOIN_CONFIG_INCLUDES)
@@ -238,7 +286,52 @@ crypto_libbitcoin_crypto_a_SOURCES = \
   crypto/sha256.cpp \
   crypto/sha256.h \
   crypto/sha512.cpp \
-  crypto/sha512.h \
+  crypto/sha512.h
+
+# univalue JSON library
+univalue_libbitcoin_univalue_a_SOURCES = \
+  univalue/univalue.cpp \
+  univalue/univalue.h \
+  univalue/univalue_escapes.h \
+  univalue/univalue_read.cpp \
+  univalue/univalue_write.cpp
+
+libbitcoin_crypto_x86_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(CRYPTO_X86_CXXFLAGS) $(CRYPTO_AES_CXXFLAGS) $(CRYPTO_AVX2_CXXFLAGS)
+libbitcoin_crypto_x86_a_SOURCES = \
+  aes.cpp \
+  sha512.cpp
+
+# common: shared between SUQAd, and SUQA-qt and non-server tools
+libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
+libbitcoin_common_a_SOURCES = \
+  amount.cpp \
+  arith_uint256.cpp \
+  base58.cpp \
+  chainparams.cpp \
+  txdb.cpp \
+  leveldbwrapper.cpp \
+  aescache.cpp \
+  coins.cpp \
+  compressor.cpp \
+  core_read.cpp \
+  core_write.cpp \
+  eccryptoverify.cpp \
+  ecwrapper.cpp \
+  hash.cpp \
+  key.cpp \
+  keystore.cpp \
+  netbase.cpp \
+  patternsearch.cpp \
+  primitives/block.cpp \
+  primitives/transaction.cpp \
+  protocol.cpp \
+  pubkey.cpp \
+  scheduler.cpp \
+  script/interpreter.cpp \
+  script/script.cpp \
+  script/script_error.cpp \
+  script/sign.cpp \
+  script/standard.cpp \
   algo/groestl.c \
   algo/blake.c \
   algo/bmw.c \
@@ -263,69 +356,6 @@ crypto_libbitcoin_crypto_a_SOURCES = \
   algo/sph_sha2.c \
   algo/gost_streebog.c \
   algo/SWIFFTX/SWIFFTX.c \
-  algo/sph_groestl.h \
-  algo/sph_types.h \
-  algo/sph_blake.h \
-  algo/sph_bmw.h \
-  algo/sph_jh.h \
-  algo/sph_keccak.h \
-  algo/sph_skein.h \
-  algo/sph_luffa.h \
-  algo/sph_cubehash.h \
-  algo/sph_simd.h \
-  algo/sph_echo.h \
-  algo/sph_shavite.h \
-  algo/sph_sha2.h \
-  algo/sph_haval.h \
-  algo/sph_tiger.h \
-  algo/lyra2.h \
-  algo/sponge.h \
-  algo/gost_streebog.h \
-  algo/SWIFFTX/SWIFFTX.h
-
-# univalue JSON library
-univalue_libbitcoin_univalue_a_SOURCES = \
-  univalue/univalue.cpp \
-  univalue/univalue.h \
-  univalue/univalue_escapes.h \
-  univalue/univalue_read.cpp \
-  univalue/univalue_write.cpp
-
-libbitcoin_crypto_x86_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(CRYPTO_X86_CXXFLAGS) $(CRYPTO_AES_CXXFLAGS) $(CRYPTO_AVX2_CXXFLAGS)
-libbitcoin_crypto_x86_a_SOURCES = \
-  aes.cpp \
-  sha512.cpp
-
-# common: shared between SUQAd, and SUQA-qt and non-server tools
-libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
-libbitcoin_common_a_SOURCES = \
-  amount.cpp \
-  arith_uint256.cpp \
-  base58.cpp \
-  chainparams.cpp \
-  txdb.cpp \
-  leveldbwrapper.cpp \
-  coins.cpp \
-  compressor.cpp \
-  core_read.cpp \
-  core_write.cpp \
-  eccryptoverify.cpp \
-  ecwrapper.cpp \
-  hash.cpp \
-  key.cpp \
-  keystore.cpp \
-  netbase.cpp \
-  patternsearch.cpp \
-  primitives/block.cpp \
-  primitives/transaction.cpp \
-  protocol.cpp \
-  pubkey.cpp \
-  scheduler.cpp \
-  script/interpreter.cpp \
-  script/script.cpp \
-  script/script_error.cpp \
-  script/sign.cpp \
-  script/standard.cpp \
   $(BITCOIN_CORE_H)
 
 # util: shared between all executables.
@@ -387,7 +417,7 @@ if ENABLE_WALLET
 SUQAd_LDADD += libbitcoin_wallet.a
 endif
 
-SUQAd_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS)
+SUQAd_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(ZMQ_LIBS)
 #
 
 # SUQA-cli binary #
@@ -457,7 +487,7 @@ libbitcoinconsensus_la_CPPFLAGS = $(CRYPTO_CFLAGS) -I$(builddir)/obj -DBUILD_BIT
 endif
 #
 
-CLEANFILES = leveldb/libleveldb.a leveldb/libmemenv.a *.gcda *.gcno
+CLEANFILES = leveldb/libleveldb.a leveldb/libmemenv.a *.gcda *.gcno zmq/*.gcda zmq/*.gcno
 
 DISTCLEANFILES = obj/build.h
 

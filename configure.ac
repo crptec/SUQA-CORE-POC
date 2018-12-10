@@ -3,7 +3,7 @@ AC_PREREQ([2.60])
 define(_CLIENT_VERSION_MAJOR, 6)
 define(_CLIENT_VERSION_MINOR, 0)
 define(_CLIENT_VERSION_REVISION, 2)
-define(_CLIENT_VERSION_BUILD, 2)
+define(_CLIENT_VERSION_BUILD, 1)
 define(_CLIENT_VERSION_IS_RELEASE, true)
 define(_COPYRIGHT_YEAR, 2018)
 AC_INIT([SUQA Core],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_REVISION],[https://github.com/SUQAORG/SUQA-CORE/issues],[SUQA])
@@ -89,9 +89,9 @@ AC_ARG_ENABLE([upnp-default],
   [use_upnp_default=no])
 
 AC_ARG_ENABLE(tests,
-    AS_HELP_STRING([--enable-tests],[compile tests (default is no)]),
+    AS_HELP_STRING([--enable-tests],[compile tests (default is yes)]),
     [use_tests=$enableval],
-    [use_tests=no])
+    [use_tests=yes])
 
 AC_ARG_ENABLE(gui-tests,
     AS_HELP_STRING([--disable-gui-tests],[do not compile GUI tests (default is to compile if GUI and tests enabled)]),
@@ -138,6 +138,12 @@ AC_ARG_ENABLE([lcov],
   [use_lcov=yes],
   [use_lcov=no])
 
+AC_ARG_ENABLE([zmq],
+  [AS_HELP_STRING([--disable-zmq],
+  [disable ZMQ notifications])],
+  [use_zmq=$enableval],
+  [use_zmq=yes])
+
 AC_ARG_ENABLE([glibc-back-compat],
   [AS_HELP_STRING([--enable-glibc-back-compat],
   [enable backwards compatibility with glibc])],
@@ -167,7 +173,7 @@ fi
 ##       compatibility with the legacy buildsystem.
 ##
 if test "x$CXXFLAGS_overridden" = "xno"; then
-  CXXFLAGS="$CXXFLAGS -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter -Wno-self-assign"
+  CXXFLAGS="$CXXFLAGS -std=c++11 -Wall -Wextra -Wformat -Wformat-security -Wno-unused-parameter -Wno-self-assign"
 fi
 CPPFLAGS="$CPPFLAGS -DBOOST_SPIRIT_THREADSAFE -DHAVE_BUILD_INFO -D__STDC_FORMAT_MACROS"
 
@@ -673,6 +679,15 @@ if test x$use_pkgconfig = xyes; then
       if test x$use_qr != xno; then
         BITCOIN_QT_CHECK([PKG_CHECK_MODULES([QR], [libqrencode], [have_qrencode=yes], [have_qrencode=no])])
       fi
+      if test "x$use_zmq" = "xyes"; then
+        PKG_CHECK_MODULES([ZMQ],[libzmq >= 4],
+        [AC_DEFINE([ENABLE_ZMQ],[1],[Define to 1 to enable ZMQ functions])],
+        [AC_DEFINE([ENABLE_ZMQ],[0],[Define to 1 to enable ZMQ functions])
+        AC_MSG_WARN([libzmq version 4.x or greater not found, disabling])
+        use_zmq=no])
+      else
+        AC_DEFINE_UNQUOTED([ENABLE_ZMQ],[0],[Define to 1 to enable ZMQ functions])
+      fi
     ]
   )
 else
@@ -686,6 +701,27 @@ else
   if test x$use_qr != xno; then
     BITCOIN_QT_CHECK([AC_CHECK_LIB([qrencode], [main],[QR_LIBS=-lqrencode], [have_qrencode=no])])
     BITCOIN_QT_CHECK([AC_CHECK_HEADER([qrencode.h],, have_qrencode=no)])
+  fi
+  if test "x$use_zmq" = "xyes"; then
+    AC_CHECK_HEADER([zmq.h],
+      [AC_DEFINE([ENABLE_ZMQ],[1],[Define to 1 to enable ZMQ functions])],
+      [AC_MSG_WARN([zmq.h not found, disabling zmq support])
+      use_zmq=no
+      AC_DEFINE([ENABLE_ZMQ],[0],[Define to 1 to enable ZMQ functions])])
+    AC_CHECK_LIB([zmq],[zmq_ctx_shutdown],ZMQ_LIBS=-lzmq,
+      [AC_MSG_WARN([libzmq >= 4.0 not found, disabling zmq support])
+      use_zmq=no
+      AC_DEFINE([ENABLE_ZMQ],[0],[Define to 1 to enable ZMQ functions])])
+  else
+    AC_DEFINE_UNQUOTED([ENABLE_ZMQ],[0],[Define to 1 to enable ZMQ functions])
+  fi
+  if test "x$use_zmq" = "xyes"; then
+    dnl Assume libzmq was built for static linking
+    case $host in
+      *mingw*)
+        ZMQ_CFLAGS="$ZMQ_CFLAGS -DZMQ_STATIC"
+      ;;
+    esac
   fi
 fi
 
@@ -868,6 +904,7 @@ AM_CONDITIONAL([USE_LCOV],[test x$use_lcov = xyes])
 AM_CONDITIONAL([USE_COMPARISON_TOOL],[test x$use_comparison_tool != xno])
 AM_CONDITIONAL([USE_COMPARISON_TOOL_REORG_TESTS],[test x$use_comparison_tool_reorg_test != xno])
 AM_CONDITIONAL([GLIBC_BACK_COMPAT],[test x$use_glibc_compat = xyes])
+AM_CONDITIONAL([ENABLE_ZMQ], [test x$use_zmq = xyes])
 
 AC_DEFINE(CLIENT_VERSION_MAJOR, _CLIENT_VERSION_MAJOR, [Major version])
 AC_DEFINE(CLIENT_VERSION_MINOR, _CLIENT_VERSION_MINOR, [Minor version])
@@ -891,6 +928,7 @@ AC_SUBST(TESTDEFS)
 AC_SUBST(LEVELDB_TARGET_FLAGS)
 AC_SUBST(MINIUPNPC_CPPFLAGS)
 AC_SUBST(MINIUPNPC_LIBS)
+AC_SUBST(ZMQ_LIBS)
 AC_CONFIG_FILES([Makefile src/Makefile share/qt/Info.plist src/test/buildenv.py])
 AC_CONFIG_FILES([qa/pull-tester/run-bitcoind-for-test.sh],[chmod +x qa/pull-tester/run-bitcoind-for-test.sh])
 AC_CONFIG_FILES([qa/pull-tester/tests-config.sh],[chmod +x qa/pull-tester/tests-config.sh])
@@ -942,4 +980,34 @@ case $host in
      chmod 755 libtool
    ;;
 esac
+
+echo
+echo "Options used to compile and link:"
+echo "  with wallet   = $enable_wallet"
+echo "  with gui / qt = $bitcoin_enable_qt"
+if test x$bitcoin_enable_qt != xno; then
+  echo "    with bip70  = $enable_bip70"
+  echo "    with qr     = $use_qr"
+fi
+echo "  with zmq      = $use_zmq"
+echo "  with test     = $use_tests"
+echo "  with bench    = $use_bench"
+echo "  with upnp     = $use_upnp"
+echo "  use asm       = $use_asm"
+echo "  sanitizers    = $use_sanitizers"
+echo "  debug enabled = $enable_debug"
+echo "  gprof enabled = $enable_gprof"
+echo "  werror        = $enable_werror"
+echo
+echo "  target os     = $TARGET_OS"
+echo "  build os      = $BUILD_OS"
+echo
+echo "  CC            = $CC"
+echo "  CFLAGS        = $CFLAGS"
+echo "  CPPFLAGS      = $DEBUG_CPPFLAGS $HARDENED_CPPFLAGS $CPPFLAGS"
+echo "  CXX           = $CXX"
+echo "  CXXFLAGS      = $DEBUG_CXXFLAGS $HARDENED_CXXFLAGS $WARN_CXXFLAGS $NOWARN_CXXFLAGS $ERROR_CXXFLAGS $GPROF_CXXFLAGS $CXXFLAGS"
+echo "  LDFLAGS       = $PTHREAD_CFLAGS $HARDENED_LDFLAGS $GPROF_LDFLAGS $LDFLAGS"
+echo "  ARFLAGS       = $ARFLAGS"
+echo
 

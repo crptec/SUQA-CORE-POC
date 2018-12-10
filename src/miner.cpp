@@ -602,7 +602,8 @@ void static BitcoinMiner(CWallet *pwallet, uint32_t minerI, uint32_t minerN, int
                 for (int i = 0; i < 20 && minerStopFlag == 0 && fGenerate && !ShutdownRequested(); i++) {
                     pblock->nNonce = nNonce;
                     nNonce += minerN;
-                    hash = pblock->GetHash();
+                    //hash = pblock->FindBestPatternHash(collisions, scratchpad, nThreads, &minerStopFlag);
+                    hash = pblock->GetPoWHash();
 
 										/*
                     //totalHashes = totalHashes + collisions;

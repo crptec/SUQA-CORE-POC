@@ -91,11 +91,14 @@ public:
         genesis.nBits    = STARTBITS;
         genesis.nNonce   = 1990615403;
 
+
         if(genesis.GetHash() != uint256S("000032bd27c65ec42967b7854a49df222abdfae8d9350a61083af8eab2a25e03") ){
             arith_uint256 hashTarget = arith_uint256().SetCompact(genesis.nBits);
             uint256 thash;
             while(true){
-		thash = genesis.GetHash();
+								//thash = genesis.FindBestPatternHash(collisions,scratchpad,8,&tmpflag);
+								thash = genesis.GetPoWHash();
+								//printf("nonce %08X: hash = %s (target = %s)\n", genesis.nNonce, thash.ToString().c_str(), hashTarget.ToString().c_str());
                 if (UintToArith256(thash) <= hashTarget)
                     break;
                 genesis.nNonce++;
@@ -189,7 +192,10 @@ public:
             arith_uint256 hashTarget = arith_uint256().SetCompact(genesis.nBits);
             uint256 thash;
             while(true){
-		thash = genesis.GetHash();
+								//thash = genesis.FindBestPatternHash(collisions,scratchpad,8,&tmpflag);
+								thash = genesis.GetPoWHash();
+                LogPrintf("nonce %08X: hash = %s (target = %s)\n", genesis.nNonce, thash.ToString().c_str(),
+                hashTarget.ToString().c_str());
                 if (UintToArith256(thash) <= hashTarget)
                     break;
                 genesis.nNonce=genesis.nNonce+10000;

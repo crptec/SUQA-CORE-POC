@@ -4,6 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "txdb.h"
+#include "base58.h"
 
 #include "chainparams.h"
 #include "hash.h"
@@ -20,6 +21,11 @@ using namespace std;
 static const char DB_COINS = 'c';
 static const char DB_BLOCK_FILES = 'f';
 static const char DB_TXINDEX = 't';
+static const char DB_ADDRESSINDEX = 'a';
+static const char DB_ADDRESSUNSPENTINDEX = 'u';
+static const char DB_TIMESTAMPINDEX = 's';
+static const char DB_BLOCKHASHINDEX = 'z';
+static const char DB_SPENTINDEX = 'p';
 static const char DB_BLOCK_INDEX = 'b';
 
 static const char DB_BEST_BLOCK = 'B';
@@ -147,6 +153,7 @@ bool CCoinsViewDB::GetStats(CCoinsStats &stats) const {
             return error("%s: Deserialize or I/O error - %s", __func__, e.what());
         }
     }
+	
     stats.nHeight = mapBlockIndex.find(GetBestBlock())->second->nHeight;
     stats.hashSerialized = ss.GetHash();
     stats.nTotalAmount = nTotalAmount;
@@ -159,11 +166,13 @@ bool CCoinsViewDB::TermDepositStats(CTermDepositStats &stats) const {
        that restriction.  */
     boost::scoped_ptr<leveldb::Iterator> pcursor(const_cast<CLevelDBWrapper*>(&db)->NewIterator());
     pcursor->SeekToFirst();
-     CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
 
+    CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
+	
 	CAmount nNumberTxAmount = 0;
 	CAmount nValueAmount = 0;
 	std::set<uint160> addresses;
+	
     while (pcursor->Valid()) {
 		boost::this_thread::interruption_point();
         try {
@@ -188,10 +197,25 @@ bool CCoinsViewDB::TermDepositStats(CTermDepositStats &stats) const {
 							nNumberTxAmount += 1;
 							nValueAmount += out.nValue;
 							addresses.insert(uint160(vSolutions[0]));
+							int nBlockMatured = out.scriptPubKey.GetTermDepositReleaseBlock() - chainActive.Height();
+							if (nBlockMatured <= 720){
+								stats.nValueAmount1day += out.nValue;
+							} else if (720 < nBlockMatured && nBlockMatured <= 1440){
+								stats.nValueAmount2days += out.nValue;
+							} else if (1440 < nBlockMatured && nBlockMatured <= 5040){
+								stats.nValueAmount7days += out.nValue;
+							} else if (5040 < nBlockMatured && nBlockMatured <= 10080){
+								stats.nValueAmount14days += out.nValue;
+							} else if (10080 < nBlockMatured && nBlockMatured <= 21600){
+								stats.nValueAmount30days += out.nValue;
+							} else {
+								stats.nValueAmountMore30days += out.nValue;
+							}
 						}
 					}else{
 						continue;
 					}
+					
 				}
 			}
             pcursor->Next();
@@ -227,6 +251,243 @@ bool CBlockTreeDB::WriteTxIndex(const std::vector<std::pair<uint256, CDiskTxPos>
     return WriteBatch(batch);
 }
 
+bool CBlockTreeDB::ReadSpentIndex(CSpentIndexKey &key, CSpentIndexValue &value) {
+    return Read(make_pair(DB_SPENTINDEX, key), value);
+}
+
+bool CBlockTreeDB::UpdateSpentIndex(const std::vector<std::pair<CSpentIndexKey, CSpentIndexValue> >&vect) {
+    CLevelDBBatch batch;
+    for (std::vector<std::pair<CSpentIndexKey,CSpentIndexValue> >::const_iterator it=vect.begin(); it!=vect.end(); it++) {
+        if (it->second.IsNull()) {
+            batch.Erase(make_pair(DB_SPENTINDEX, it->first));
+        } else {
+            batch.Write(make_pair(DB_SPENTINDEX, it->first), it->second);
+        }
+    }
+    return WriteBatch(batch);
+}
+
+bool CBlockTreeDB::UpdateAddressUnspentIndex(const std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue > >&vect) {
+    CLevelDBBatch batch;
+    for (std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue> >::const_iterator it=vect.begin(); it!=vect.end(); it++) {
+        if (it->second.IsNull()) {
+            batch.Erase(make_pair(DB_ADDRESSUNSPENTINDEX, it->first));
+        } else {
+            batch.Write(make_pair(DB_ADDRESSUNSPENTINDEX, it->first), it->second);
+        }
+    }
+    return WriteBatch(batch);
+}
+
+bool CBlockTreeDB::ReadAddressUnspentIndex(uint160 addressHash, int type,
+        std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue> > &unspentOutputs) {
+
+    boost::scoped_ptr<leveldb::Iterator> pcursor(NewIterator());
+
+	CDataStream ssKeySet(SER_DISK, CLIENT_VERSION);
+	ssKeySet << make_pair(DB_ADDRESSUNSPENTINDEX, CAddressIndexIteratorKey(type, addressHash));
+    pcursor->Seek(ssKeySet.str());
+
+    while (pcursor->Valid()) {
+        boost::this_thread::interruption_point();
+		try {
+            leveldb::Slice slKey = pcursor->key();
+            CDataStream ssKey(slKey.data(), slKey.data()+slKey.size(), SER_DISK, CLIENT_VERSION);
+
+            char chType;
+            CAddressUnspentKey indexKey;
+            ssKey >> chType;
+            ssKey >> indexKey;
+
+			if (chType == DB_ADDRESSUNSPENTINDEX && indexKey.hashBytes == addressHash) {
+				try {
+                    leveldb::Slice slValue = pcursor->value();
+                    CDataStream ssValue(slValue.data(), slValue.data()+slValue.size(), SER_DISK, CLIENT_VERSION);
+                    CAddressUnspentValue nValue;
+                    ssValue >> nValue;
+                    unspentOutputs.push_back(make_pair(indexKey, nValue));
+                    pcursor->Next();
+                } catch (const std::exception& e) {
+                    return error("failed to get address unspent value");
+                }
+
+			} else {
+				break;
+			}
+		} catch (const std::exception& e) {
+            return error("%s: Deserialize or I/O error - %s", __func__, e.what());
+        }
+    }
+
+    return true;
+}
+
+bool CBlockTreeDB::WriteAddressIndex(const std::vector<std::pair<CAddressIndexKey, CAmount > >&vect) {
+    CLevelDBBatch batch;
+    for (std::vector<std::pair<CAddressIndexKey, CAmount> >::const_iterator it=vect.begin(); it!=vect.end(); it++)
+        batch.Write(make_pair(DB_ADDRESSINDEX, it->first), it->second);
+    return WriteBatch(batch);
+}
+
+bool CBlockTreeDB::EraseAddressIndex(const std::vector<std::pair<CAddressIndexKey, CAmount > >&vect) {
+    CLevelDBBatch batch;
+    for (std::vector<std::pair<CAddressIndexKey, CAmount> >::const_iterator it=vect.begin(); it!=vect.end(); it++)
+        batch.Erase(make_pair(DB_ADDRESSINDEX, it->first));
+    return WriteBatch(batch);
+}
+
+bool CBlockTreeDB::ReadAddressIndex(uint160 addressHash, int type,
+                                    std::vector<std::pair<CAddressIndexKey, CAmount> > &addressIndex,
+                                    int start, int end) {
+
+    //boost::scoped_ptr<leveldb::Iterator> pcursor(NewIterator());
+	//LogPrintf("txdb : addr from param %d %s\n", type, CBitcoinAddress(CKeyID(uint160(addressHash))).ToString());
+/*
+	CDataStream ssKeySet(SER_DISK, CLIENT_VERSION);
+
+    if (start > 0 && end > 0) {
+		ssKeySet << make_pair(DB_ADDRESSINDEX, CAddressIndexIteratorHeightKey(type, addressHash, start));
+    } else {
+		ssKeySet << make_pair(DB_ADDRESSINDEX, CAddressIndexIteratorKey(type, addressHash));
+    }
+
+
+	pcursor->Seek(ssKeySet.str());
+*/
+	boost::scoped_ptr<CLevelDBIterator> pcursor(NewIteratorDB());
+	
+    if (start > 0 && end > 0) {
+        pcursor->Seek(make_pair(DB_ADDRESSINDEX, CAddressIndexIteratorHeightKey(type, addressHash, start)));
+    } else {
+        pcursor->Seek(make_pair(DB_ADDRESSINDEX, CAddressIndexIteratorKey(type, addressHash)));
+    }
+	
+    while (pcursor->Valid()) {
+        boost::this_thread::interruption_point();
+		/*
+		try {
+            leveldb::Slice slKey = pcursor->key();
+            CDataStream ssKey(slKey.data(), slKey.data()+slKey.size(), SER_DISK, CLIENT_VERSION);
+
+            char chType;
+            CAddressIndexKey indexKey;
+            ssKey >> chType;
+            ssKey >> indexKey;
+	    string btcaddr = CBitcoinAddress(CScriptID(uint160(indexKey.hashBytes))).ToString();
+	    string rpcaddr = CBitcoinAddress(CScriptID(uint160(addressHash))).ToString();
+	    LogPrintf("txdb : index addr %s VS  rpc addr: %s\n", btcaddr, rpcaddr);
+	    string btcaddr = CBitcoinAddress(CKeyID(uint160(indexKey.hashBytes))).ToString();
+        string rpcaddr = CBitcoinAddress(CKeyID(uint160(addressHash))).ToString();
+	    LogPrintf("txdb : index addr %s VS  rpc addr: %s\n", btcaddr, rpcaddr);
+			if ( chType == DB_ADDRESSINDEX && indexKey.hashBytes == addressHash){ 
+				if (end > 0 && indexKey.blockHeight > end) {
+					break;
+				}
+				try{
+					leveldb::Slice slValue = pcursor->value();
+					CDataStream ssValue(slValue.data(), slValue.data()+slValue.size(), SER_DISK, CLIENT_VERSION);
+					CAmount nValue;
+					ssValue >> nValue;
+					addressIndex.push_back(make_pair(indexKey, nValue));
+					pcursor->Next();
+				} catch (const std::exception& e) {
+                    return error("failed to get address index value");
+                }
+			} else { //do nothing if condition is false
+				LogPrintf("txdb : False in condition: \n");
+				break;
+			}
+		} catch (const std::exception& e) {
+            return error("%s: Deserialize or I/O error - %s", __func__, e.what());
+        }
+		*/
+	    
+		std::pair<char,CAddressIndexKey> key;
+        if (pcursor->GetKey(key) && key.first == DB_ADDRESSINDEX && key.second.hashBytes == addressHash) {
+            if (end > 0 && key.second.blockHeight > end) {
+                break;
+            }
+            CAmount nValue;
+            if (pcursor->GetValue(nValue)) {
+                addressIndex.push_back(make_pair(key.second, nValue));
+				string btcaddr = CBitcoinAddress(CKeyID(uint160(key.second.hashBytes))).ToString();
+				string rpcaddr = CBitcoinAddress(CKeyID(uint160(addressHash))).ToString();
+				LogPrintf("txdb : index addr %s VS  rpc addr: %s %d\n", btcaddr, rpcaddr, nValue);
+                pcursor->Next();
+            } else {
+                return error("failed to get address index value");
+            }
+        } else {
+            break;
+        }
+    }
+    return true;
+}
+
+/*
+bool CBlockTreeDB::WriteTimestampIndex(const CTimestampIndexKey &timestampIndex) {
+    CLevelDBBatch batch;
+    batch.Write(make_pair(DB_TIMESTAMPINDEX, timestampIndex), 0);
+    return WriteBatch(batch);
+}
+
+bool CBlockTreeDB::ReadTimestampIndex(const unsigned int &high, const unsigned int &low, const bool fActiveOnly, std::vector<std::pair<uint256, unsigned int> > &hashes) {
+
+    boost::scoped_ptr<leveldb::Iterator> pcursor(NewIterator());
+
+    ssKeySet << make_pair(DB_TIMESTAMPINDEX, CTimestampIndexIteratorKey(low));
+	pcursor->Seek(ssKeySet.str());
+
+    while (pcursor->Valid()) {
+        boost::this_thread::interruption_point();
+		try {
+            leveldb::Slice slKey = pcursor->key();
+            CDataStream ssKey(slKey.data(), slKey.data()+slKey.size(), SER_DISK, CLIENT_VERSION);
+            char chType;
+            ssKey >> chType;
+            if (chType == DB_BLOCK_INDEX) {
+                leveldb::Slice slValue = pcursor->value();
+                CDataStream ssValue(slValue.data(), slValue.data()+slValue.size(), SER_DISK, CLIENT_VERSION);
+                CDiskBlockIndex diskindex;
+                ssValue >> diskindex;
+
+				if (fActiveOnly) {
+					if (HashOnchainActive(key.second.blockHash)) {
+						hashes.push_back(std::make_pair(key.second.blockHash, key.second.timestamp));
+					}
+				} else {
+					hashes.push_back(std::make_pair(key.second.blockHash, key.second.timestamp));
+				}
+
+                pcursor->Next();
+            } else {
+                break; // if shutdown requested or finished loading block index
+            }
+        } catch (const std::exception& e) {
+            return error("%s: Deserialize or I/O error - %s", __func__, e.what());
+        }
+        
+    }
+
+    return true;
+}
+
+bool CBlockTreeDB::WriteTimestampBlockIndex(const CTimestampBlockIndexKey &blockhashIndex, const CTimestampBlockIndexValue &logicalts) {
+    CLevelDBBatch batch;
+    batch.Write(make_pair(DB_BLOCKHASHINDEX, blockhashIndex), logicalts);
+    return WriteBatch(batch);
+}
+
+bool CBlockTreeDB::ReadTimestampBlockIndex(const uint256 &hash, unsigned int &ltimestamp) {
+
+    CTimestampBlockIndexValue(lts);
+    if (!Read(std::make_pair(DB_BLOCKHASHINDEX, hash), lts))
+	return false;
+
+    ltimestamp = lts.ltimestamp;
+    return true;
+}
+*/
 bool CBlockTreeDB::WriteFlag(const std::string &name, bool fValue) {
     return Write(std::make_pair(DB_FLAG, name), fValue ? '1' : '0');
 }

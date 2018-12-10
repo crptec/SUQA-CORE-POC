@@ -26,6 +26,29 @@
 using namespace json_spirit;
 using namespace std;
 
+bool getAddressesFromParams(const Array& params, std::vector<std::pair<uint160, int>>  &addresses)
+{
+
+    CBitcoinAddress address(params[0].get_str());
+    bool isValid = address.IsValid();
+	
+	if (isValid){
+        uint160 hashBytes;
+        int type = 0;
+        if (!address.GetIndexKey(hashBytes, type)) {
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
+        }
+		 CKeyID keyID;
+		if (!address.GetKeyID(keyID)) {
+			throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to key");
+		}
+        addresses.push_back(std::make_pair(hashBytes, type));
+    } else {
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
+    }
+    return true;
+}
+
 /**
  * @note Do not add or change anything in the information returned by this
  * method. `getinfo` exists for backwards-compatibility only. It combines
@@ -403,31 +426,100 @@ Value setmocktime(const Array& params, bool fHelp)
     return Value::null;
 }
 
-Value gettimelockedstat(const Array& params, bool fHelp)
+Value getaddresstxids(const Array& params, bool fHelp)
+{
+	if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "getaddresstxids\n"
+            "\nReturns the txids for an address(es) (requires addressindex to be enabled).\n"
+            "\nArguments:\n"
+            "{\n"
+            "  \"addresses\"\n"
+            "    [\n"
+            "      \"address\"  (string) The base58check encoded address\n"
+            "      ,...\n"
+            "    ]\n"
+            "  \"start\" (number) The start block height\n"
+            "  \"end\" (number) The end block height\n"
+            "}\n"
+            "\nResult:\n"
+            "[\n"
+            "  \"transactionid\"  (string) The transaction id\n"
+            "  ,...\n"
+            "]\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getaddresstxids", "'{\"addresses\": [\"12c6DSiU4Rq3P4ZxziKxzrL5LmMBrzjrJX\"]}'")
+            + HelpExampleRpc("getaddresstxids", "{\"addresses\": [\"12c6DSiU4Rq3P4ZxziKxzrL5LmMBrzjrJX\"]}")
+        );
+		
+	std::vector<std::pair<uint160, int> > addresses;
+
+    if (!getAddressesFromParams(params, addresses)) {
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
+    }
+
+    std::vector<std::pair<CAddressIndexKey, CAmount> > addressIndex;
+
+    for (std::vector<std::pair<uint160, int> >::iterator it = addresses.begin(); it != addresses.end(); it++) {
+		//LogPrintf("Loop for address: %s\n", CBitcoinAddress(CKeyID(uint160(it->first))).ToString());
+		if (!GetAddressIndex((*it).first, (*it).second, addressIndex)) { /*(*it).second is address type [always 1]*/
+			throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available for address");
+		} 
+    }
+
+    Array result;
+
+    for (std::vector<std::pair<CAddressIndexKey, CAmount> >::const_iterator it=addressIndex.begin(); it!=addressIndex.end(); it++) {
+		
+		Object obj;
+		//LogPrintf("Loop for address Index: %d - %s\n", height, txid);
+		obj.push_back(Pair("BlockHeight", it->first.blockHeight));
+		obj.push_back(Pair("TxId", it->first.txhash.GetHex()));
+		CAmount nAmount = 0;
+		nAmount = it->second;
+		obj.push_back(Pair("Value", (double)nAmount / (double)COIN ));	
+		result.push_back(obj);
+    }
+
+    return result;
+	
+}
+
+
+Value gettermdepositstats(const Array& params, bool fHelp)
 {
 	if (fHelp || params.size() != 0)
         throw runtime_error(
-            "gettimelockedstat\n"
-            "\nReturns the stats of all timelock no.\n"
+            "gettermdepositstats\n"
+            "\nReturns the stats of all term deposits.\n"
             "\nResult:\n"
             "[\n"
 			"  \"nAddress\"  (Number) number of address\n"
-            "  \"nTimeLockedTxs\"  (Number) the total of TimeLocked Tx\n"
+            "  \"nTimeLockedTxs\"  Number) the total number of TimeLocked Tx\n"
             "  \"nTotalTimeLockedValue\"  (number) the total SUQA locked on all wallets\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("gettimelockedstat", "")
-            + HelpExampleRpc("gettimelockedstat", "")
+            + HelpExampleCli("gettermdepositstats", "")
+            + HelpExampleRpc("gettermdepositstats", "")
         );
-	Object ret;
 
+	Object ret;
+		
 	CTermDepositStats stats;
 	FlushStateToDisk();
 	if (pcoinsTip->TermDepositStats(stats)) {
         ret.push_back(Pair("nAddress", (int)stats.nAddress));
 		ret.push_back(Pair("nTimeLockedTxs", (int64_t)stats.nTransactions));
 		ret.push_back(Pair("nTotalTimeLockedValue", ValueFromAmount(stats.nTotalAmount)));
+		ret.push_back(Pair("nValueAmount1day", ValueFromAmount(stats.nValueAmount1day)));
+		ret.push_back(Pair("nValueAmount2days", ValueFromAmount(stats.nValueAmount2days)));
+		ret.push_back(Pair("nValueAmount7days", ValueFromAmount(stats.nValueAmount7days)));
+		ret.push_back(Pair("nValueAmount14days", ValueFromAmount(stats.nValueAmount14days)));
+		ret.push_back(Pair("nValueAmount30days", ValueFromAmount(stats.nValueAmount30days)));
+		ret.push_back(Pair("nValueAmountMore30days", ValueFromAmount(stats.nValueAmountMore30days)));
     }
-
+	
 	return ret;
 }
+
+

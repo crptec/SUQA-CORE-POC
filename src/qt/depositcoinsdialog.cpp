@@ -221,8 +221,6 @@ void DepositCoinsDialog::on_sendButton_clicked()
                 recipients.append(entry->getValue());
                 //This will return 0 if not a term deposit
                 termDepositBlocks=entry->getTermDepositLength();
-                // add some blocks to avoid 0 interests in case of 1 day term, and some blocks are received while the dialog is open
-                if (termDepositBlocks >= 720 && termDepositBlocks < 730) termDepositBlocks = 730;
                 //LogPrintf("TDB:%d",termDepositBlocks);
             }
             else

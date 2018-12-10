@@ -14,11 +14,31 @@ SUQAD_BIN=$(top_builddir)/src/SUQAd$(EXEEXT)
 SUQA_QT_BIN=$(top_builddir)/src/qt/SUQA-qt$(EXEEXT)
 SUQA_CLI_BIN=$(top_builddir)/src/SUQA-cli$(EXEEXT)
 SUQA_TX_BIN=$(top_builddir)/src/SUQA-tx$(EXEEXT)
+SUQA_WIN_PACKAGE=$(PACKAGE)-WIN-PACKAGE
 
 empty :=
 space := $(empty) $(empty)
 
+OSX_APP=SUQA-Qt.app
+OSX_VOLNAME = $(subst $(space),-,$(PACKAGE_NAME))
+OSX_DMG = $(OSX_VOLNAME).dmg
+OSX_BACKGROUND_SVG=background.svg
+OSX_BACKGROUND_IMAGE=background.tiff
+OSX_BACKGROUND_IMAGE_DPIS=36 72
+OSX_DSSTORE_GEN=$(top_srcdir)/contrib/macdeploy/custom_dsstore.py
+OSX_DEPLOY_SCRIPT=$(top_srcdir)/contrib/macdeploy/macdeployqtplus
+OSX_FANCY_PLIST=$(top_srcdir)/contrib/macdeploy/fancy.plist
+OSX_INSTALLER_ICONS=$(top_srcdir)/src/qt/res/icons/bitcoin.icns
+OSX_PLIST=$(top_srcdir)/share/qt/Info.plist #not installed
+OSX_QT_TRANSLATIONS = da,de,es,hu,ru,uk,zh_CN,zh_TW
+
 DIST_DOCS = $(wildcard doc/*.md) $(wildcard doc/release-notes/*.md)
+
+OSX_PACKAGING = $(OSX_DEPLOY_SCRIPT) $(OSX_FANCY_PLIST) $(OSX_INSTALLER_ICONS) \
+  $(top_srcdir)/contrib/macdeploy/$(OSX_BACKGROUND_SVG) \
+  $(OSX_DSSTORE_GEN) \
+  $(top_srcdir)/contrib/macdeploy/detached-sig-apply.sh \
+  $(top_srcdir)/contrib/macdeploy/detached-sig-create.sh
 
 COVERAGE_INFO = baseline_filtered_combined.info baseline.info block_test.info \
   leveldb_baseline.info test_bitcoin_filtered.info total_coverage.info \
@@ -38,85 +58,95 @@ distcheck-hook:
 distcleancheck:
 	@:
 
-PLATF ?= $(host)
-REL_DIR = $(top_srcdir)/release
-STG_DIR = $(REL_DIR)/$(PLATF)
-
-PACK_NAME = $(REL_DIR)/$(PACKAGE)-CORE-$(PACKAGE_VERSION)-$(PLATF)
-
-SUQA-WIN-PACKAGE: all-recursive
-	$(MKDIR_P) $(STG_DIR)
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQAD_BIN) $(STG_DIR) | true
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_QT_BIN) $(STG_DIR) | true
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_CLI_BIN) $(STG_DIR) | true
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_TX_BIN) $(STG_DIR) | true
+$(SUQA_WIN_PACKAGE): all-recursive
+	$(MKDIR_P) $(top_builddir)/release
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQAD_BIN) $(top_builddir)/release
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_QT_BIN) $(top_builddir)/release
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_CLI_BIN) $(top_builddir)/release
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_TX_BIN) $(top_builddir)/release
 	@test -f $(SZA) && \
-		$(SZA) a -m0=lzma2 -mx=9 $(STG_DIR)/SUQA-CORE.7z $(STG_DIR)/SUQA-qt.exe $(STG_DIR)/SUQA-tx.exe $(STG_DIR)/SUQAd.exe $(STG_DIR)/SUQA-cli.exe && \
-		cat $(top_builddir)/share/7z.sfx $(STG_DIR)/SUQA-CORE.7z > $(STG_DIR)/SUQA-CORE.exe && \
-		zip -1 -j $(PACK_NAME).zip $(STG_DIR)/SUQA-CORE.exe || \
-	        echo error: could not build $@
+		$(SZA) a -m0=lzma2 -mx=9 $(top_builddir)/release/$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-GUI.7z $(top_builddir)/release/SUQA-qt.exe && \
+		$(SZA) a -m0=lzma2 -mx=9 $(top_builddir)/release/$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-CLI.7z $(top_builddir)/release/SUQA-tx.exe $(top_builddir)/release/SUQAd.exe $(top_builddir)/release/SUQA-cli.exe && \
+		cat $(top_builddir)/share/7z.sfx $(top_builddir)/release/$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-GUI.7z > $(top_builddir)/release/$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-GUI.exe && \
+		cat $(top_builddir)/share/7z.sfx $(top_builddir)/release/$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-CLI.7z > $(top_builddir)/release/$(PACKAGE)-$(PACKAGE_VERSION)-win$(WINDOWS_BITS)-CLI.exe && \
+		rm -f $(top_builddir)/release/*.7z $(top_builddir)/release/SUQA-qt.exe $(top_builddir)/release/SUQA-cli.exe $(top_builddir)/release/SUQA-tx.exe $(top_builddir)/release/SUQA-tx.exe $(top_builddir)/release/SUQAd.exe || \
+        echo error: could not build $@
 	@echo built $@
-
-SUQA-LIN-PACKAGE: all-recursive
-	$(MKDIR_P) $(STG_DIR)
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_QT_BIN) $(STG_DIR) | true
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQAD_BIN) $(STG_DIR) | true
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_CLI_BIN) $(STG_DIR) | true
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_TX_BIN) $(STG_DIR) | true
-	tar --ignore-failed-read -c --lzma -f $(PACK_NAME).tar.lzma -C $(STG_DIR) SUQAd SUQA-tx SUQA-cli SUQA-qt
 
 $(if $(findstring src/,$(MAKECMDGOALS)),$(MAKECMDGOALS), none): FORCE
 	$(MAKE) -C src $(patsubst src/%,%,$@)
 
-OSX_APP=SUQA-CORE.app
-OSX_VOLNAME = $(subst $(space),-,$(PACKAGE_NAME))
-OSX_DMG = $(OSX_VOLNAME).dmg
-OSX_BACKGROUND_IMAGE=$(top_srcdir)/contrib/macdeploy/background.tiff
-OSX_DSSTORE_GEN=$(top_srcdir)/contrib/macdeploy/custom_dsstore.py
-OSX_DEPLOY_SCRIPT=$(top_srcdir)/contrib/macdeploy/macdeployqtplus.py
-OSX_FANCY_PLIST=$(top_srcdir)/contrib/macdeploy/fancy.plist
-OSX_INSTALLER_ICONS=$(top_srcdir)/src/qt/res/icons/bitcoin.icns
-OSX_PLIST=$(top_srcdir)/share/qt/Info.plist
-OSX_QT_TRANSLATIONS = da,de,es,hu,ru,uk,zh_CN,zh_TW
+$(OSX_APP)/Contents/PkgInfo:
+	$(MKDIR_P) $(@D)
+	@echo "APPL????" > $@
 
-OSXAPP_DIR=$(STG_DIR)/$(OSX_APP)
-OSXISO_DIR=$(STG_DIR)/dist
+$(OSX_APP)/Contents/Resources/empty.lproj:
+	$(MKDIR_P) $(@D)
+	@touch $@
 
-SUQA-OSX-APP: all-recursive
-	@rm -rf $(OSXAPP_DIR)
-	$(MKDIR_P) $(OSXAPP_DIR)/Contents/Resources/Base.lproj
-	$(MKDIR_P) $(OSXAPP_DIR)/Contents/MacOS
-	@touch $(OSXAPP_DIR)/Contents/Resources/empty.lproj
-	$(INSTALL_DATA) $(OSX_INSTALLER_ICONS) $(OSXAPP_DIR)/Contents/Resources/bitcoin.icns
-	$(INSTALL_DATA) $(OSX_PLIST) $(OSXAPP_DIR)/Contents/Info.plist
-	@echo "APPL????" > $(OSXAPP_DIR)/Contents/PkgInfo
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_QT_BIN) $(OSXAPP_DIR)/Contents/MacOS/SUQA-qt | true
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQAD_BIN) $(OSXAPP_DIR)/Contents/MacOS/SUQAd | true
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_CLI_BIN) $(OSXAPP_DIR)/Contents/MacOS/SUQA-cli | true
-	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM) $(SUQA_TX_BIN) $(OSXAPP_DIR)/Contents/MacOS/SUQA-tx | true
-	echo '{	CFBundleDisplayName = "$(PACKAGE_NAME)"; CFBundleName = "$(PACKAGE_NAME)"; }' > $(OSXAPP_DIR)/Contents/Resources/Base.lproj/InfoPlist.strings
+$(OSX_APP)/Contents/Info.plist: $(OSX_PLIST)
+	$(MKDIR_P) $(@D)
+	$(INSTALL_DATA) $< $@
 
-SUQA-OSX-DMG: SUQA-OSX-APP
-	@rm -rf $(OSXISO_DIR)
-	INSTALLNAMETOOL=$(INSTALLNAMETOOL)  OTOOL=$(OTOOL) STRIP=$(STRIP) $(OSX_DEPLOY_SCRIPT) \
-		$(OSX_APP) -translations-dir=$(QT_TRANSLATION_DIR) \
-		-add-qt-tr $(OSX_QT_TRANSLATIONS) -verbose 2 \
-		-fancy $(OSX_FANCY_PLIST) -prefix $(OSXAPP_DIR)/..
-	$(OSX_DSSTORE_GEN) $(OSXISO_DIR)/.DS_Store "$(OSX_VOLNAME)"
-	$(LN_S) /Applications $(OSXISO_DIR)/Applications
-	$(MKDIR_P) $(OSXISO_DIR)/.background
-	cp -f $(OSX_BACKGROUND_IMAGE) $(OSXISO_DIR)/.background/
-	$(GENISOIMAGE) -no-cache-inodes -D -l -probe -V "$(OSX_VOLNAME)" -no-pad -r -apple -o $(PACK_NAME).dmg $(OSXISO_DIR)
+$(OSX_APP)/Contents/Resources/bitcoin.icns: $(OSX_INSTALLER_ICONS)
+	$(MKDIR_P) $(@D)
+	$(INSTALL_DATA) $< $@
+
+$(OSX_APP)/Contents/MacOS/SUQA-Qt: $(SUQA_QT_BIN)
+	$(MKDIR_P) $(@D)
+	STRIPPROG="$(STRIP)" $(INSTALL_STRIP_PROGRAM)  $< $@
+
+$(OSX_APP)/Contents/Resources/Base.lproj/InfoPlist.strings:
+	$(MKDIR_P) $(@D)
+	echo '{	CFBundleDisplayName = "$(PACKAGE_NAME)"; CFBundleName = "$(PACKAGE_NAME)"; }' > $@
+
+OSX_APP_BUILT=$(OSX_APP)/Contents/PkgInfo $(OSX_APP)/Contents/Resources/empty.lproj \
+  $(OSX_APP)/Contents/Resources/bitcoin.icns $(OSX_APP)/Contents/Info.plist \
+  $(OSX_APP)/Contents/MacOS/SUQA-Qt $(OSX_APP)/Contents/Resources/Base.lproj/InfoPlist.strings
+
+osx_volname:
+	echo $(OSX_VOLNAME) >$@
+
+if BUILD_DARWIN
+$(OSX_DMG): $(OSX_APP_BUILT) $(OSX_PACKAGING)
+	$(OSX_DEPLOY_SCRIPT) $(OSX_APP) -add-qt-tr $(OSX_QT_TRANSLATIONS) -translations-dir=$(QT_TRANSLATION_DIR) -dmg -fancy $(OSX_FANCY_PLIST) -verbose 2 -volname $(OSX_VOLNAME)
+
+deploydir: $(OSX_DMG)
+else
+APP_DIST_DIR=$(top_builddir)/dist
+APP_DIST_EXTRAS=$(APP_DIST_DIR)/.background/$(OSX_BACKGROUND_IMAGE) $(APP_DIST_DIR)/.DS_Store $(APP_DIST_DIR)/Applications
+
+$(APP_DIST_DIR)/Applications:
+	@rm -f $@
+	@cd $(@D); $(LN_S) /Applications $(@F)
+
+$(APP_DIST_EXTRAS): $(APP_DIST_DIR)/$(OSX_APP)/Contents/MacOS/SUQA-Qt
+
+$(OSX_DMG): $(APP_DIST_EXTRAS)
+	$(GENISOIMAGE) -no-cache-inodes -D -l -probe -V "$(OSX_VOLNAME)" -no-pad -r -apple -o $@ dist
+
+dpi%.$(OSX_BACKGROUND_IMAGE): contrib/macdeploy/$(OSX_BACKGROUND_SVG)
+	sed 's/PACKAGE_NAME/$(PACKAGE_NAME)/' < "$<" | $(RSVG_CONVERT) -f png -d $* -p $* | $(IMAGEMAGICK_CONVERT) - $@
+OSX_BACKGROUND_IMAGE_DPIFILES := $(foreach dpi,$(OSX_BACKGROUND_IMAGE_DPIS),dpi$(dpi).$(OSX_BACKGROUND_IMAGE))
+$(APP_DIST_DIR)/.background/$(OSX_BACKGROUND_IMAGE): $(OSX_BACKGROUND_IMAGE_DPIFILES)
+	$(MKDIR_P) $(@D)
+	$(TIFFCP) -c none $(OSX_BACKGROUND_IMAGE_DPIFILES) $@
+
+$(APP_DIST_DIR)/.DS_Store: $(OSX_DSSTORE_GEN)
+	$< "$@" "$(OSX_VOLNAME)"
+
+$(APP_DIST_DIR)/$(OSX_APP)/Contents/MacOS/SUQA-Qt: $(OSX_APP_BUILT) $(OSX_PACKAGING)
+	INSTALLNAMETOOL=$(INSTALLNAMETOOL)  OTOOL=$(OTOOL) STRIP=$(STRIP) $(OSX_DEPLOY_SCRIPT) $(OSX_APP) -translations-dir=$(QT_TRANSLATION_DIR) -add-qt-tr $(OSX_QT_TRANSLATIONS) -verbose 2
+
+deploydir: $(APP_DIST_EXTRAS)
+endif
 
 if TARGET_DARWIN
-appbundle: SUQA-OSX-APP
-deploy: SUQA-OSX-DMG
-else
-if TARGET_WINDOWS
-deploy: SUQA-WIN-PACKAGE
-else
-deploy: SUQA-LIN-PACKAGE
+appbundle: $(OSX_APP_BUILT)
+deploy: $(OSX_DMG)
 endif
+if TARGET_WINDOWS
+deploy: $(SUQA_WIN_PACKAGE)
 endif
 
 $(SUQA_QT_BIN): FORCE
@@ -192,7 +222,7 @@ dist_noinst_SCRIPTS = autogen.sh
 
 EXTRA_DIST = $(top_srcdir)/share/genbuild.sh qa/pull-tester/rpc-tests.sh qa/pull-tester/run-bitcoin-cli qa/rpc-tests $(DIST_DOCS) $(OSX_PACKAGING)
 
-CLEANFILES = SUQA-OSX-DMG SUQA_WIN_PACKAGE
+CLEANFILES = $(OSX_DMG) $(SUQA_WIN_PACKAGE)
 
 .INTERMEDIATE: $(COVERAGE_INFO)
 

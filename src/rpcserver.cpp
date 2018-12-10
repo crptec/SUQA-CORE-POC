@@ -126,7 +126,7 @@ static inline int64_t roundint64(double d)
 CAmount AmountFromValue(const Value& value)
 {
     double dAmount = value.get_real();
-    if (dAmount <= 0.0 || dAmount > MAX_MONEY / COIN)
+    if (dAmount <= 0.0 || dAmount > 21000000.0)
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
     CAmount nAmount = roundint64(dAmount * COIN);
     if (!MoneyRange(nAmount))
@@ -272,8 +272,7 @@ static const CRPCCommand vRPCCommands[] =
     { "control",            "getinfo",                &getinfo,                true  }, /* uses wallet if enabled */
     { "control",            "help",                   &help,                   true  },
     { "control",            "stop",                   &stop,                   true  },
-
-	{ "stats",              "gettimelockedstat",      &gettimelockedstat,      true  },
+    { "control",            "getzmqnotifications",    &getzmqnotifications,    true  },	
 
     /* P2P networking */
     { "network",            "getnetworkinfo",         &getnetworkinfo,         true  },
@@ -290,6 +289,7 @@ static const CRPCCommand vRPCCommands[] =
     { "blockchain",         "getblockcount",          &getblockcount,          true  },
     { "blockchain",         "getblock",               &getblock,               true  },
     { "blockchain",         "getblockhash",           &getblockhash,           true  },
+    { "blockchain",         "getblockheader",         &getblockheader,         true  },
     { "blockchain",         "getchaintips",           &getchaintips,           true  },
     { "blockchain",         "getdifficulty",          &getdifficulty,          true  },
     { "blockchain",         "getmempoolinfo",         &getmempoolinfo,         true  },
@@ -322,6 +322,11 @@ static const CRPCCommand vRPCCommands[] =
     { "rawtransactions",    "getrawtransaction",      &getrawtransaction,      true  },
     { "rawtransactions",    "sendrawtransaction",     &sendrawtransaction,     false },
     { "rawtransactions",    "signrawtransaction",     &signrawtransaction,     false }, /* uses wallet if enabled */
+	
+    /* Address functions */
+    { "address",            "getaddresstxids",        &getaddresstxids,        true  },	
+	{ "stats",              "gettermdepositstats",    &gettermdepositstats,    true  },
+	
 
     /* Utility functions */
     { "util",               "createmultisig",         &createmultisig,         true  },
@@ -1049,6 +1054,14 @@ std::string HelpExampleCli(string methodname, string args){
 std::string HelpExampleRpc(string methodname, string args){
     return "> curl --user myusername --data-binary '{\"jsonrpc\": \"1.0\", \"id\":\"curltest\", "
         "\"method\": \"" + methodname + "\", \"params\": [" + args + "] }' -H 'content-type: text/plain;' http://127.0.0.1:8332/\n";
+}
+
+int RPCSerializationFlags()
+{
+    int flag = 0;
+    if (GetArg("-rpcserialversion", DEFAULT_RPC_SERIALIZE_VERSION) == 0)
+        flag |= SERIALIZE_TRANSACTION_NO_WITNESS;
+    return flag;
 }
 
 const CRPCTable tableRPC;

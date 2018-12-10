@@ -287,7 +287,7 @@ void BitcoinGUI::createActions()
     sendCoinsMenuAction->setStatusTip(sendCoinsAction->statusTip());
     sendCoinsMenuAction->setToolTip(sendCoinsMenuAction->statusTip());
 
-    depositCoinsAction = new QAction(SingleColorIcon(":/icons/deposit"), tr("Time-&Lock"), this);
+    depositCoinsAction = new QAction(SingleColorIcon(":/icons/deposit"), tr("&Deposit"), this);
     depositCoinsAction->setStatusTip(tr("Make a term deposit"));
     depositCoinsAction->setToolTip(depositCoinsAction->statusTip());
     depositCoinsAction->setCheckable(true);
@@ -459,7 +459,6 @@ void BitcoinGUI::createMenuBar()
     help->addAction(aboutQtAction);
 
 #ifdef ENABLE_WALLET
-		/*
     if(walletFrame)
     {
         QMenu *mining = appMenuBar->addMenu(tr("&Mining"));
@@ -467,7 +466,6 @@ void BitcoinGUI::createMenuBar()
         mining->addAction(miningOnAction);
         mining->addAction(miningOffAction);
     }
-    */
 #endif // ENABLE_WALLET
 }
 

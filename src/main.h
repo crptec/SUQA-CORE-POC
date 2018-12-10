@@ -22,9 +22,12 @@
 #include "script/sigcache.h"
 #include "script/standard.h"
 #include "sync.h"
+#include "spentindex.h"
+#include "addressindex.h"
 #include "tinyformat.h"
 #include "txmempool.h"
 #include "uint256.h"
+#include "aescache.h"
 
 #include <algorithm>
 #include <exception>
@@ -40,16 +43,18 @@
 class CBlockIndex;
 class CBlockTreeDB;
 class CBloomFilter;
+				   
 class CInv;
 class CScriptCheck;
+				 
 class CValidationInterface;
 class CValidationState;
 
+								  
 struct CNodeStateStats;
 
 
-//static int MINERHODLINGPERIOD=561*365;		// 561 = blocks per day
-#define MINERHODLINGPERIOD 720*365
+static int MINERHODLINGPERIOD=561*365;		// 561 = blocks per day with original hodlcoin target spacing
 
 #define DEV_ADDRESS "SZLafuDjnjqh2tAfTrG9ZAGzbP8HkzNXvB"
 #define DEV_ADDRESS_TEST "SZLafuDjnjqh2tAfTrG9ZAGzbP8HkzNXvB"
@@ -58,6 +63,7 @@ CAmount GetDevCoin(CAmount reward);
 
 /** Default for -blockmaxsize and -blockminsize, which control the range of sizes the mining code will create **/
 static const unsigned int DEFAULT_BLOCK_MAX_SIZE = 750000;
+											   
 static const unsigned int DEFAULT_BLOCK_MIN_SIZE = 0;
 /** Default for -blockprioritysize, maximum space for zero/low-fee transactions **/
 static const unsigned int DEFAULT_BLOCK_PRIORITY_SIZE = 50000;
@@ -71,12 +77,27 @@ static const unsigned int MAX_P2SH_SIGOPS = 15;
 static const unsigned int MAX_STANDARD_TX_SIGOPS = MAX_BLOCK_SIGOPS/5;
 /** Default for -maxorphantx, maximum number of orphan transactions kept in memory */
 static const unsigned int DEFAULT_MAX_ORPHAN_TRANSACTIONS = 100;
+														 
+													 
+																			 
+														
+																		  
+													  
+																						 
+															
+																			  
+														
+																					
+															  
+																					
+													  
 /** The maximum size of a blk?????.dat file (since 0.8) */
 static const unsigned int MAX_BLOCKFILE_SIZE = 0x8000000; // 128 MiB
 /** The pre-allocation chunk size for blk?????.dat files (since 0.8) */
 static const unsigned int BLOCKFILE_CHUNK_SIZE = 0x1000000; // 16 MiB
 /** The pre-allocation chunk size for rev?????.dat files (since 0.8) */
 static const unsigned int UNDOFILE_CHUNK_SIZE = 0x100000; // 1 MiB
+
 /** Maximum number of script-checking threads allowed */
 static const int MAX_SCRIPTCHECK_THREADS = 16;
 /** -par default (number of script-checking threads, 0 = auto) */
@@ -88,6 +109,11 @@ static const unsigned int BLOCK_STALLING_TIMEOUT = 2;
 /** Number of headers sent in one getheaders result. We rely on the assumption that if a peer sends
  *  less than this number, we reached its tip. Changing this value is a protocol upgrade. */
 static const unsigned int MAX_HEADERS_RESULTS = 2000;
+																			 
+																			   
+										  
+																					
+										 
 /** Size of the "block download window": how far ahead of our current height do we fetch?
  *  Larger windows tolerate larger download speed differences between peer, but increase the potential
  *  degree of disordering of blocks on disk (which make reindexing and in the future perhaps pruning
@@ -99,7 +125,8 @@ static const unsigned int DATABASE_WRITE_INTERVAL = 60 * 60;
 static const unsigned int DATABASE_FLUSH_INTERVAL = 24 * 60 * 60;
 /** Maximum length of reject messages. */
 static const unsigned int MAX_REJECT_MESSAGE_LENGTH = 111;
-
+static const bool DEFAULT_ADDRESSINDEX = false;
+static const bool DEFAULT_SPENTINDEX = false;
 struct BlockHasher
 {
     size_t operator()(const uint256& hash) const { return hash.GetCheapHash(); }
@@ -112,6 +139,7 @@ typedef boost::unordered_map<uint256, CBlockIndex*, BlockHasher> BlockMap;
 extern BlockMap mapBlockIndex;
 extern uint64_t nLastBlockTx;
 extern uint64_t nLastBlockSize;
+								 
 extern const std::string strMessageMagic;
 extern CWaitableCriticalSection csBestBlock;
 extern CConditionVariable cvBlockChange;
@@ -119,13 +147,17 @@ extern bool fImporting;
 extern bool fReindex;
 extern int nScriptCheckThreads;
 extern bool fTxIndex;
+extern bool fAddressIndex;
+extern bool fSpentIndex;						  				
+							
 extern bool fIsBareMultisigStd;
+							 
 extern bool fCheckBlockIndex;
 extern bool fCheckpointsEnabled;
 extern size_t nCoinCacheUsage;
+																										  
 extern CFeeRate minRelayTxFee;
 extern bool fAlerts;
-
 /** Best header we've seen so far (used for getheaders queries' starting points). */
 extern CBlockIndex *pindexBestHeader;
 
@@ -141,6 +173,9 @@ extern bool fPruneMode;
 extern uint64_t nPruneTarget;
 /** Block files containing a block-height within MIN_BLOCKS_TO_KEEP of chainActive.Tip() will not be pruned. */
 static const signed int MIN_BLOCKS_TO_KEEP = 288;
+
+													
+												 
 
 // Require that user allocate at least 550MB for block & undo files (blk???.dat and rev???.dat)
 // At 1MB per block, 288 blocks = 288MB.
@@ -202,6 +237,12 @@ void PartitionCheck(bool (*initialDownloadCheck)(), CCriticalSection& cs, const 
 /** Check whether we are doing an initial block download (synchronizing from disk or network) */
 bool IsInitialBlockDownload();
 /** Format a string that describes several potential problems detected by the core */
+								
+																						
+								  
+																 
+																						 
+   
 std::string GetWarnings(std::string strFor);
 /** Retrieve a transaction (from memory pool, or from disk, if possible) */
 bool GetTransaction(const uint256 &hash, CTransaction &tx, uint256 &hashBlock, bool fAllowSlow = false);
@@ -246,6 +287,11 @@ void PruneAndFlush();
 bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransaction &tx, bool fLimitFree,
                         bool* pfMissingInputs, bool fRejectAbsurdFee=false);
 
+																	   
+															  
+
+																	
+																								  
 
 struct CNodeStateStats {
     int nMisbehavior;
@@ -317,6 +363,14 @@ unsigned int GetLegacySigOpCount(const CTransaction& tx);
  */
 unsigned int GetP2SHSigOpCount(const CTransaction& tx, const CCoinsViewCache& mapInputs);
 
+   
+														   
+																	
+																				  
+											  
+											   
+   
+																								  
 
 /**
  * Check whether all inputs of this transaction are valid (no double spends, scripts & sigs, amounts)
@@ -353,6 +407,30 @@ bool IsFinalTx(const CTransaction &tx, int nBlockHeight, int64_t nBlockTime);
 bool CheckFinalTx(const CTransaction &tx, int flags = -1);
 
 /**
+																				   
+   
+												 
+
+   
+																							
+																								  
+   
+																											   
+
+   
+																			 
+  
+																						
+																						
+																					   
+							
+																					 
+  
+												  
+   
+																													  
+
+   
  * Closure representing one script verification
  * Note that this stores references to the spending transaction
  */
@@ -360,11 +438,13 @@ class CScriptCheck
 {
 private:
     CScript scriptPubKey;
+				   
     const CTransaction *ptxTo;
     unsigned int nIn;
     unsigned int nFlags;
     bool cacheStore;
     ScriptError error;
+									   
 
 public:
     CScriptCheck(): ptxTo(0), nIn(0), nFlags(0), cacheStore(false), error(SCRIPT_ERR_UNKNOWN_ERROR) {}
@@ -377,15 +457,27 @@ public:
     void swap(CScriptCheck &check) {
         scriptPubKey.swap(check.scriptPubKey);
         std::swap(ptxTo, check.ptxTo);
+										
         std::swap(nIn, check.nIn);
         std::swap(nFlags, check.nFlags);
         std::swap(cacheStore, check.cacheStore);
         std::swap(error, check.error);
+										
     }
 
     ScriptError GetScriptError() const { return error; }
 };
 
+bool GetAddressIndex(uint160 addressHash, int type,
+                     std::vector<std::pair<CAddressIndexKey, CAmount> > &addressIndex,
+                     int start = 0, int end = 0);																																						  
+												   
+																					  
+												 
+													 
+																										  
+
+										   
 
 /** Functions for disk access for blocks */
 bool WriteBlockToDisk(CBlock& block, CDiskBlockPos& pos, const CMessageHeader::MessageStartChars& messageStart);
@@ -399,7 +491,7 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex);
  *  In case pfClean is provided, operation will try to be tolerant about errors, and *pfClean
  *  will be true if no problems were found. Otherwise, the return value will be false in case
  *  of problems. Note that in any case, coins may be modified. */
-bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex, CCoinsViewCache& coins, bool* pfClean = NULL);
+bool DisconnectBlock(const CBlock& block, CValidationState& state, const CBlockIndex* pindex, CCoinsViewCache& coins, bool* pfClean = NULL);
 
 /** Apply the effects of this block (with given index) on the UTXO set represented by coins */
 bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pindex, CCoinsViewCache& coins, bool fJustCheck = false);
@@ -409,6 +501,8 @@ bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state, bool f
 bool CheckBlock(const CBlock& block, CValidationState& state, bool fCheckPOW = true, bool fCheckMerkleRoot = true);
 
 /** Context-dependent validity checks */
+																																											  
+																								 
 bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& state, CBlockIndex *pindexPrev);
 bool ContextualCheckBlock(const CBlock& block, CValidationState& state, CBlockIndex *pindexPrev);
 
@@ -433,6 +527,10 @@ public:
     uint64_t nTimeLast;          //! latest time of block in file
 
     ADD_SERIALIZE_METHODS;
+																 
+																																			
+
+																															  
 
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
@@ -460,6 +558,7 @@ public:
      }
 
      std::string ToString() const;
+																											  
 
      /** update statistics (does not update nSize) */
      void AddBlock(unsigned int nHeightIn, uint64_t nTimeIn) {
@@ -502,6 +601,29 @@ extern CCoinsViewCache *pcoinsTip;
 extern CBlockTreeDB *pblocktree;
 
 extern int minerStopFlag;
+										
+   
+												  
 
+										 
+
+extern CBlockAesCache *aesCache;
+
+   
+																							
+
+																			
+
+								
+   
+												  
+															 
+												 
+																	 
+													   
+															 
+												  
+
+						
 
 #endif // BITCOIN_MAIN_H

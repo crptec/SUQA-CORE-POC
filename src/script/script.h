@@ -588,6 +588,7 @@ public:
     unsigned int GetSigOpCount(const CScript& scriptSig) const;
 
     bool IsPayToScriptHash() const;
+	bool IsPayToPublicKeyHash() const;
 
     bool IsTermDeposit() const;
     int GetTermDepositReleaseBlock() const;

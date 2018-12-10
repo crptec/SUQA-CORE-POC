@@ -450,7 +450,7 @@ Value deposittoaddress(const Array& params, bool fHelp)
     if (!EnsureWalletIsAvailable(fHelp))
         return Value::null;
 
-    if (fHelp || params.size() < 4 || params.size() > 7)
+    if (fHelp || params.size() < 3 || params.size() > 6)
         throw runtime_error(
             "deposittoaddress \"fromaccount\" \"SUQAaddress\" amount termdepositlength ( \"comment\" \"comment-to\" subtractfeefromamount )\n"
             "\nDeposit an amount to a given address for term length (blocks). The amount is a real and is rounded to the nearest 0.00000001\n"
